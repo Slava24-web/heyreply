@@ -34,7 +34,7 @@ describe('heyreply API (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
 
-    const a = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'A', email: emailA, password, acceptTerms: true, acceptPersonalData: true }).expect(201);
+    const a = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'A', email: emailA, password, locale: 'ru', acceptTerms: true, acceptPersonalData: true }).expect(201);
     jarA = cookies(a);
     const b = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'B', email: emailB, password, acceptTerms: true, acceptPersonalData: true }).expect(201);
     jarB = cookies(b);
@@ -67,6 +67,8 @@ describe('heyreply API (e2e)', () => {
       const names = (await http.get('/api/v1/dictionaries/sources').set('Cookie', jar).expect(200)).body.map((s: { name: string }) => s.name);
       expect(names).toEqual(expect.arrayContaining(['Company website', 'Referral', 'Habr Career']));
       expect(names).not.toContain('Рекомендация');
+      // English accounts start with USD (Russian ones keep RUB)
+      expect(stored.defaultCurrency).toBe('USD');
       const app1 = await http.post('/api/v1/applications').set('Cookie', jar).send({ companyName: 'Acme', positionName: 'Dev', vacancyUrl: 'https://career.habr.com/vacancies/1' }).expect(201);
       expect(app1.body.source.name).toBe('Habr Career');
       const ruNames = (await http.get('/api/v1/dictionaries/sources').set('Cookie', jarA).expect(200)).body.map((s: { name: string }) => s.name);
@@ -268,7 +270,7 @@ describe('heyreply API (e2e)', () => {
     afterAll(() => prisma.user.deleteMany({ where: { email: emailB } }));
 
     beforeAll(async () => {
-      jarB = cookies(await http().post('/api/v1/auth/register').send({ name: 'Importer', email: emailB, password, acceptTerms: true, acceptPersonalData: true }).expect(201));
+      jarB = cookies(await http().post('/api/v1/auth/register').send({ name: 'Importer', email: emailB, password, locale: 'ru', acceptTerms: true, acceptPersonalData: true }).expect(201));
       const r = await http().post('/api/v1/me/tokens').set('Cookie', jarB).send({ name: 'Chrome' }).expect(201);
       token = r.body.token;
       expect(token).toMatch(/^otk_/);

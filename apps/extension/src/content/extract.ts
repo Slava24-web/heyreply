@@ -129,7 +129,9 @@ export function isApplied(doc: Document, adapter: Adapter): boolean {
   const scoped = adapter.appliedScope?.flatMap((sel) => [...doc.querySelectorAll(sel)]) ?? [];
   // Short pages without a title block are confirmation screens ("…/thanks"): read them whole
   const body = doc.body && (doc.body.textContent?.length ?? 0) < 3000 ? doc.body : null;
-  const regions = scoped.length ? scoped : [titleRegion(doc) ?? body].filter((x): x is Element => !!x);
+  // Confirmations often appear as a toast/dialog outside the title block ("Отклик отправлен", "Application sent")
+  const notices = [...doc.querySelectorAll('[role="dialog"], [role="alertdialog"], [role="alert"], [role="status"], [aria-live="polite"], [aria-live="assertive"]')].filter((el) => (el.textContent?.length ?? 0) < 600);
+  const regions = [...(scoped.length ? scoped : [titleRegion(doc) ?? body].filter((x): x is Element => !!x)), ...notices];
   // The vacancy title itself is excluded: "Applied Scientist" must not read as an "Applied" badge
   const titles = [doc.querySelector('h1')?.textContent, ...adapter.titleSelectors.map((s) => doc.querySelector(s)?.textContent)].map(clean).filter((t) => t.length > 2);
   return regions.some((el) => {

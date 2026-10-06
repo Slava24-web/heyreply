@@ -1,5 +1,6 @@
 'use client';
-import { ArrowDownRight, ArrowUpRight, CalendarClock, Hourglass, Lightbulb, Plus } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, CalendarClock, Hourglass, Lightbulb, Plus, RefreshCw } from 'lucide-react';
+import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { animate, useMotionValue, useTransform, motion } from 'motion/react';
 import { useEffect } from 'react';
@@ -12,7 +13,7 @@ import { CompanyAvatar } from '@/components/applications/company-avatar';
 import { StatusBadge } from '@/components/applications/status-badge';
 import { useUI } from '@/components/shell/ui-context';
 import { useFormat } from '@/lib/format';
-import { useAttention, useBulk, useFunnel, useHeatmap, useInsights, useMe, useSummary, useTimeline } from '@/lib/queries';
+import { qk, useAttention, useBulk, useFunnel, useHeatmap, useInsights, useMe, useSummary, useTimeline } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/lib/use-mounted';
 import { PeriodSwitch, usePeriod } from './period';
@@ -231,6 +232,28 @@ function Attention() {
   );
 }
 
+/** Re-reads applications and analytics in place — picks up applications the browser extension added meanwhile. */
+function RefreshButton() {
+  const t = useTranslations('dashboard');
+  const qc = useQueryClient();
+  const fetching = useIsFetching({ predicate: (q) => q.queryKey[0] === qk.apps[0] || q.queryKey[0] === qk.analytics[0] }) > 0;
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      aria-label={t('refresh')}
+      title={t('refresh')}
+      disabled={fetching}
+      onClick={() => {
+        qc.invalidateQueries({ queryKey: qk.apps });
+        qc.invalidateQueries({ queryKey: qk.analytics });
+      }}
+    >
+      <RefreshCw className={cn(fetching && 'animate-spin')} />
+    </Button>
+  );
+}
+
 export function Dashboard() {
   const t = useTranslations('dashboard');
   const tl = useTranslations('list');
@@ -269,7 +292,10 @@ export function Dashboard() {
           <p className="text-sm text-muted">{t('title')}</p>
           <h1 className="font-display text-[28px] font-medium tracking-[-0.02em] md:text-[34px]">{me ? t('greeting', { name: me.name.split(' ')[0] }) : ' '}</h1>
         </div>
-        <PeriodSwitch />
+        <div className="flex items-center gap-2">
+          <RefreshButton />
+          <PeriodSwitch />
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3 lg:gap-6">

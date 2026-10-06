@@ -68,7 +68,7 @@
     "loginTitle": "Sign in",
     "loginSubtitle": "Good to see you again",
     "registerTitle": "Create account",
-    "registerSubtitle": "Your personal job search workspace",
+    "registerSubtitle": "Personal account for tracking job search progress",
     "name": "Name",
     "email": "Email",
     "password": "Password",
@@ -114,7 +114,9 @@
     "url": "Invalid link",
     "generic": "Couldn’t complete the action",
     "TOO_MANY_TOKENS": "You can have at most 10 tokens — revoke unused ones",
-    "INBOUND_DISABLED": "E-mail import is not configured on the server"
+    "INBOUND_DISABLED": "E-mail import is not configured on the server",
+    "APPLICATION_LIMIT": "You have reached the application limit for an account. Delete some to add new ones",
+    "DICT_LIMIT": "You have reached the dictionary size limit. Delete or merge unused entries"
   },
   "status": {
     "APPLIED": "Applied",
@@ -276,6 +278,7 @@
     "importedHint": "Added by the heyreply extension; the status updates when you open “My applications” on the board"
   },
   "dashboard": {
+    "refresh": "Refresh data",
     "title": "Overview",
     "greeting": "Hello, {name}",
     "total": "Applications",
@@ -412,7 +415,8 @@
     "deleteAccountPassword": "Enter your password to confirm",
     "deleteAccountConfirm": "Delete your account forever?",
     "memberSince": "Member since {date}",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "support": "Support the author"
   },
   "integrations": {
     "extensionTitle": "Browser extension",
@@ -496,5 +500,12 @@
     "gateAccept": "Accept and continue",
     "gateLogout": "Sign out",
     "gateError": "Could not save your consent. Please try again."
+  },
+  "donate": {
+    "title": "Support the author",
+    "short": "Support",
+    "text": "heyreply is free: no subscriptions, no ads, no feature limits. If it has been useful, you can say thanks with a donation. It is entirely voluntary and changes nothing in your account.",
+    "button": "Donate",
+    "hint": "Opens in a new tab on a third-party service."
   }
 }

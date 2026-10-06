@@ -1,4 +1,5 @@
 'use client';
+import { DonateNavLink } from './donate';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
@@ -78,6 +79,7 @@ export function Sidebar() {
         {BOTTOM_NAV.map((n) => (
           <NavLink key={n.href} href={n.href} label={t(n.key)} icon={n.icon} collapsed={collapsed} />
         ))}
+        <DonateNavLink collapsed={collapsed} />
         <button
           onClick={toggle}
           className={cn('mt-2 flex h-9 items-center gap-3 rounded-field px-3 text-[13px] text-subtle hover:text-text', collapsed && 'justify-center px-0')}

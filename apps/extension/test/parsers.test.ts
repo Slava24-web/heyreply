@@ -151,3 +151,15 @@ describe('cleanCompanyName', async () => {
     ['АО', 'АО'],
   ])('%s → %s', (input, out) => expect(cleanCompanyName(input)).toBe(out));
 });
+
+describe('isApplied: confirmation notices', () => {
+  const hh = byPlatform('hh');
+  it('reads a toast outside the vacancy block', () => {
+    const d = doc('<h1 data-qa="vacancy-title">Dev</h1><div role="status">Отклик отправлен</div>');
+    expect(isApplied(d, hh)).toBe(true);
+  });
+  it('ignores a dialog without a confirmation', () => {
+    const d = doc('<h1 data-qa="vacancy-title">Dev</h1><div role="dialog">Расскажите о себе</div>');
+    expect(isApplied(d, hh)).toBe(false);
+  });
+});

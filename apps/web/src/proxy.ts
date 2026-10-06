@@ -34,6 +34,20 @@ function withCsp(res: NextResponse, csp: string) {
   return res;
 }
 
+/** First language from Accept-Language that we have a translation for; null if none. */
+function negotiateLocale(header: string | null): string | null {
+  if (!header) return null;
+  const tags = header
+    .split(',')
+    .map((part) => {
+      const [tag, q] = part.trim().split(';q=');
+      return { lang: tag.toLowerCase().split('-')[0], q: q ? Number(q) : 1 };
+    })
+    .filter((t) => t.lang && t.q > 0)
+    .sort((a, b) => b.q - a.q);
+  return tags.find((t) => (routing.locales as readonly string[]).includes(t.lang))?.lang ?? null;
+}
+
 // Optimistic auth check only: the API validates tokens and sessions on every request.
 export default function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
@@ -43,7 +57,9 @@ export default function proxy(request: NextRequest) {
   const segments = pathname.split('/');
   const hasLocalePrefix = (routing.locales as readonly string[]).includes(segments[1]);
   const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
-  const locale = hasLocalePrefix ? segments[1] : cookieLocale && (routing.locales as readonly string[]).includes(cookieLocale) ? cookieLocale : routing.defaultLocale;
+  const locale = hasLocalePrefix ? segments[1] : cookieLocale && (routing.locales as readonly string[]).includes(cookieLocale)
+        ? cookieLocale
+        : (negotiateLocale(request.headers.get('accept-language')) ?? routing.defaultLocale);
   const path = hasLocalePrefix ? '/' + segments.slice(2).join('/') : pathname;
   const signedIn = request.cookies.has('has_session');
   const isLegal = LEGAL.includes(path);

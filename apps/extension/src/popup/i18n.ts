@@ -30,7 +30,7 @@ const ru = {
   e_PERMISSION: 'Нужно разрешение на доступ к адресу сервера.',
   e_URL: 'Некорректный адрес.',
   disclosure:
-    'Расширение читает только страницы перечисленных площадок: название вакансии, компанию, ссылку, место, зарплату и статус отклика. Эти данные отправляются только на указанный выше сервер heyreply.',
+    'Расширение читает только страницы перечисленных площадок: название вакансии, компанию, ссылку, место, зарплату и статус отклика. Чтобы заметить отклик, оно локально следит за кликами по кнопкам отклика и за тем, успешно ли сайт принял отправку; содержимое форм, письма и пароли не читаются и не отправляются. Данные об откликах отправляются только на указанный выше сервер heyreply.',
   privacy: 'Политика конфиденциальности',
   notAffiliated: 'Не связано с площадками и не одобрено ими.',
 };
@@ -66,7 +66,7 @@ const en: typeof ru = {
   e_PERMISSION: 'Permission to reach the server address is required.',
   e_URL: 'Invalid address.',
   disclosure:
-    'The extension only reads the listed job sites: job title, company, link, location, salary and application status. This data is sent only to the heyreply server entered above.',
+    'The extension only reads the listed job sites: job title, company, link, location, salary and application status. To notice an application it watches, locally, clicks on apply buttons and whether the site accepted the submission; form contents, letters and passwords are not read or sent. Application data is sent only to the heyreply server entered above.',
   privacy: 'Privacy Policy',
   notAffiliated: 'Not affiliated with or endorsed by the job boards.',
 };

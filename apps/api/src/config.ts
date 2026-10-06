@@ -21,6 +21,13 @@ const schema = z
     ARGON2_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(2),
     /** Hashes allowed to wait for a slot; beyond that the request is rejected with 503 instead of piling up. */
     ARGON2_QUEUE: z.coerce.number().int().min(0).max(1000).default(32),
+    /** Per-user caps (the service is free, so one account must not be able to fill the disk). */
+    MAX_APPLICATIONS_PER_USER: z.coerce.number().int().min(1).default(5000),
+    MAX_DICTIONARY_ITEMS_PER_USER: z.coerce.number().int().min(1).default(2000),
+    /** SMTP transport for password-reset e-mails, e.g. smtps://user:pass@smtp.resend.com:465 (Resend, Brevo, any SMTP) */
+    SMTP_URL: z.preprocess(emptyToUndefined, z.string().url().optional()),
+    /** Sender shown to the recipient, e.g. "heyreply <no-reply@example.com>" */
+    MAIL_FROM: z.preprocess(emptyToUndefined, z.string().min(3).optional()),
     SWAGGER: z.enum(['true', 'false']).optional(),
     /** E-mail import: domain routed by Cloudflare Email Routing to the Email Worker, e.g. in.heyreply.app */
     INBOUND_EMAIL_DOMAIN: z.preprocess(emptyToUndefined, z.string().trim().toLowerCase().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/).optional()),
@@ -32,6 +39,9 @@ const schema = z
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production' && WEAK_SECRETS.includes(v.JWT_ACCESS_SECRET)) {
       ctx.addIssue({ code: 'custom', path: ['JWT_ACCESS_SECRET'], message: 'Default JWT secret must not be used in production' });
+    }
+    if (v.SMTP_URL && !v.MAIL_FROM) {
+      ctx.addIssue({ code: 'custom', path: ['MAIL_FROM'], message: 'MAIL_FROM is required when SMTP_URL is set' });
     }
     if (v.INBOUND_EMAIL_DOMAIN && !v.INBOUND_SECRET) {
       ctx.addIssue({ code: 'custom', path: ['INBOUND_SECRET'], message: 'INBOUND_SECRET is required when INBOUND_EMAIL_DOMAIN is set' });

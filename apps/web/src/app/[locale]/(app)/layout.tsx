@@ -3,6 +3,9 @@ import { Topbar } from '@/components/shell/topbar';
 import { MobileNav } from '@/components/shell/mobile-nav';
 import { CommandPalette } from '@/components/shell/command-palette';
 import { ConsentGate } from '@/components/legal/consent-gate';
+import { AuthGate } from '@/components/shell/auth-gate';
+import { DonateProvider } from '@/components/shell/donate';
+import { getDonateUrl } from '@/lib/donate';
 import { UIProvider } from '@/components/shell/ui-context';
 import { ThemeSync } from '@/components/shell/theme-sync';
 import { QuickAddSheet } from '@/components/applications/quick-add';
@@ -10,7 +13,9 @@ import { ApplicationSheet } from '@/components/applications/application-sheet';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
+    <DonateProvider url={getDonateUrl()}>
     <UIProvider>
+      <AuthGate>
       <ThemeSync />
       <ConsentGate />
       <div className="flex min-h-dvh">
@@ -24,6 +29,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <QuickAddSheet />
       <ApplicationSheet />
       <CommandPalette />
+      </AuthGate>
     </UIProvider>
+    </DonateProvider>
   );
 }

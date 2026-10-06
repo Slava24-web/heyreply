@@ -47,6 +47,12 @@ services:
       ARGON2_QUEUE: ${ARGON2_QUEUE:-32}
       INBOUND_EMAIL_DOMAIN: ${INBOUND_EMAIL_DOMAIN:-}
       INBOUND_SECRET: ${INBOUND_SECRET:-}
+      # Password-reset e-mails (optional; without SMTP_URL no mail is sent). MAIL_FROM is required with it.
+      SMTP_URL: ${SMTP_URL:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      # Per-user caps
+      MAX_APPLICATIONS_PER_USER: ${MAX_APPLICATIONS_PER_USER:-5000}
+      MAX_DICTIONARY_ITEMS_PER_USER: ${MAX_DICTIONARY_ITEMS_PER_USER:-2000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,6 +72,8 @@ services:
       LEGAL_OPERATOR_ADDRESS: ${LEGAL_OPERATOR_ADDRESS:?set LEGAL_OPERATOR_ADDRESS in .env}
       LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:?set LEGAL_CONTACT_EMAIL in .env (where users send data requests)}
       LEGAL_HOSTING: ${LEGAL_HOSTING:?set LEGAL_HOSTING in .env (hosting provider and country)}
+      # Optional donation link (https only), shown in settings, the sidebar and the legal pages
+      DONATE_URL: ${DONATE_URL:-}
     depends_on:
       api:
         condition: service_healthy

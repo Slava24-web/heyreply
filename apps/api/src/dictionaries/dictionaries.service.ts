@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { normalizeName, SYSTEM_SOURCES, systemSourceName, type DictItem, type DictionaryType } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppError } from '../common/errors';
+import { config } from '../config';
 import type { Prisma } from '../generated/prisma/client';
 
 type Tx = Prisma.TransactionClient | PrismaService;
@@ -57,7 +58,12 @@ export class DictionariesService {
   async resolve(tx: Tx, userId: string, type: DictionaryType, name: string, bump = true): Promise<string> {
     const clean = name.trim().replace(/\s+/g, ' ');
     const normalizedName = normalizeName(clean);
-    const row = await this.delegate(tx, type).upsert({
+    const delegate = this.delegate(tx, type);
+    const existing = await delegate.findUnique({ where: { userId_normalizedName: { userId, normalizedName } }, select: { id: true } });
+    if (!existing && (await delegate.count({ where: { userId } })) >= config().MAX_DICTIONARY_ITEMS_PER_USER) {
+      throw new AppError(HttpStatus.UNPROCESSABLE_ENTITY, 'DICT_LIMIT');
+    }
+    const row = await delegate.upsert({
       where: { userId_normalizedName: { userId, normalizedName } },
       create: { userId, name: clean, normalizedName, usageCount: bump ? 1 : 0, lastUsedAt: bump ? new Date() : null },
       update: bump ? { usageCount: { increment: 1 }, lastUsedAt: new Date() } : {},

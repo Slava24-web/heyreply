@@ -6,12 +6,15 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AppError } from '../common/errors';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
 import { config } from '../config';
+import { MailService } from '../mail/mail.service';
 import { LoginAttempts } from './login-attempts';
 import { PasswordHasher } from './password-hasher';
 
 /** A rotated refresh token replayed within this window is a concurrent-tab race, not theft. */
 const ROTATION_GRACE_MS = 15_000;
 const RESET_TTL_MS = 60 * 60_000;
+/** A second reset e-mail is not sent while the previous link is younger than this (anti mail-bombing). */
+const RESET_COOLDOWN_MS = 60_000;
 
 export interface IssuedTokens {
   accessToken: string;
@@ -36,6 +39,7 @@ export class AuthService {
     private readonly dictionaries: DictionariesService,
     private readonly attempts: LoginAttempts,
     private readonly hasher: PasswordHasher,
+    private readonly mail: MailService,
   ) {}
 
   private getDummyHash() {
@@ -49,7 +53,9 @@ export class AuthService {
       data: {
         email: input.email,
         name: input.name,
-        locale: input.locale ?? 'ru',
+        locale: input.locale ?? 'en',
+        // The column default is RUB; English-language accounts start with USD, and the user can change it
+        ...((input.locale ?? 'en') === 'en' ? { defaultCurrency: 'USD' } : {}),
         passwordHash: await this.hasher.hash(input.password),
         termsAcceptedAt: new Date(),
         termsVersion: LEGAL_VERSION,
@@ -128,13 +134,17 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) return;
+    // Previous link was issued moments ago: don't send another one
+    if (user.resetTokenExpires && user.resetTokenExpires.getTime() - Date.now() > RESET_TTL_MS - RESET_COOLDOWN_MS) return;
     const token = randomBytes(32).toString('base64url');
     await this.prisma.user.update({
       where: { id: user.id },
       data: { resetTokenHash: sha256(token), resetTokenExpires: new Date(Date.now() + RESET_TTL_MS) },
     });
-    // No mail transport yet. The link is a credential, so it is only printed outside production.
-    if (!config().isProd) this.logger.log(`[dev] Password reset link: ${config().WEB_ORIGIN}/reset-password?token=${token}`);
+    const link = `${config().WEB_ORIGIN}/${user.locale}/reset-password?token=${token}`;
+    // Not awaited: SMTP latency would reveal whether the e-mail has an account. The link is a credential, so it is
+    // never logged in production.
+    void this.mail.sendPasswordReset(user.email, user.locale, link).catch((e) => this.logger.error(`Password reset e-mail failed: ${(e as Error).message}`));
   }
 
   async resetPassword(token: string, password: string) {

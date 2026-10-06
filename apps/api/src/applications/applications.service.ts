@@ -11,6 +11,7 @@ import {
   type UpdateApplicationInput,
 } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
+import { assertApplicationQuota } from './quota';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
 import { AppError } from '../common/errors';
 import type { Prisma } from '../generated/prisma/client';
@@ -43,6 +44,7 @@ export class ApplicationsService {
 
   async create(userId: string, input: CreateApplicationInput): Promise<ApplicationDto> {
     const id = await this.prisma.$transaction(async (tx) => {
+      await assertApplicationQuota(tx, userId);
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       const sourceName = input.sourceName || (input.vacancyUrl ? detectSourceByUrl(input.vacancyUrl, user.locale) : null);
       const appliedAt = input.appliedAt ?? new Date();
@@ -142,6 +144,7 @@ export class ApplicationsService {
   async restore(userId: string, id: string) {
     const app = await this.prisma.application.findFirst({ where: { id, userId } });
     if (!app) throw new AppError(HttpStatus.NOT_FOUND, 'APPLICATION_NOT_FOUND');
+    if (app.deletedAt) await assertApplicationQuota(this.prisma, userId);
     await this.prisma.application.update({ where: { id }, data: { deletedAt: null, archivedAt: null } });
     return this.get(userId, id);
   }

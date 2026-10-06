@@ -6,6 +6,28 @@ const MAX_QUEUE = 500;
 const BATCH = 100;
 const RETRY_ALARM = 'heyreply-retry';
 
+/** Tabs where the user just applied, per platform: they get an in-page confirmation once heyreply has saved it. */
+const NOTIFY_TTL_MS = 3 * 60_000;
+const notifyTabs = new Map<string, Map<number, number>>();
+const watchTab = (platform: string, tabId: number | undefined) => {
+  if (tabId == null) return;
+  const m = notifyTabs.get(platform) ?? new Map<number, number>();
+  m.set(tabId, Date.now() + NOTIFY_TTL_MS);
+  notifyTabs.set(platform, m);
+};
+function notifySaved(created: Observed[]) {
+  const byPlatform = new Map<string, Observed[]>();
+  for (const i of created) byPlatform.set(i.platform, [...(byPlatform.get(i.platform) ?? []), i]);
+  for (const [platform, items] of byPlatform) {
+    const tabs = notifyTabs.get(platform);
+    if (!tabs) continue;
+    for (const [tabId, expires] of tabs) {
+      if (expires > Date.now()) chrome.tabs.sendMessage(tabId, { type: 'toast', companyName: items[0].companyName, positionName: items[0].positionName, count: items.length }, { frameId: 0 }).catch(() => {});
+    }
+    notifyTabs.delete(platform);
+  }
+}
+
 let flushing: Promise<void> | null = null;
 
 async function enqueue(items: Observed[]) {
@@ -52,6 +74,7 @@ async function doFlush() {
       .map((i, idx) => ({ i, result: r.items[idx] ?? 'unchanged' }))
       .filter(({ result }) => result === 'created' || result === 'updated' || result === 'linked' || result === 'error')
       .map(({ i, result }) => ({ platform: i.platform, companyName: i.companyName, positionName: i.positionName, status: i.status, result, at: Date.now() }));
+    notifySaved(batch.filter((_, idx) => r.items[idx] === 'created'));
     fresh.recent = [...recent, ...fresh.recent].slice(0, 20);
     await saveState(fresh);
     if (r.created || r.updated) updateBadge(r.created + r.updated, false);
@@ -78,6 +101,7 @@ function updateBadge(count: number, problem: boolean) {
 
 chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
   if (msg?.type === 'observed' && Array.isArray(msg.items)) {
+    for (const i of msg.items as Observed[]) if (i.origin === 'apply') watchTab(i.platform, _sender.tab?.id);
     enqueue(msg.items as Observed[]).then(() => reply({ ok: true }));
     return true;
   }

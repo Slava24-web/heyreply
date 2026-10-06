@@ -10,6 +10,7 @@ import {
 } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
+import { assertApplicationQuota } from '../applications/quota';
 import { applyTransition } from '../applications/status.logic';
 import type { Prisma } from '../generated/prisma/client';
 
@@ -125,6 +126,7 @@ export class ImportService {
     if (purged) return 'unchanged';
 
     // New application
+    await assertApplicationQuota(tx, userId);
     const appliedAt = item.appliedAt ?? now;
     const status: AppStatus = item.status && item.status !== 'APPLIED' ? item.status : 'APPLIED';
     const hasSalary = item.salaryFrom != null || item.salaryTo != null;

@@ -39,7 +39,7 @@ function Row({ item, type, selected, onToggle, onDelete }: { item: DictItem; typ
   };
 
   return (
-    <li className={cn('grid grid-cols-[32px_1fr_auto] items-center gap-3 border-b border-border/70 px-4 py-2.5 last:border-0 sm:grid-cols-[32px_1fr_180px_80px_auto]', selected && 'bg-primary-soft/40')}>
+    <li className={cn('grid grid-cols-[32px_1fr_auto] items-center gap-3 border-b border-border/70 px-4 py-2.5 last:border-0 sm:grid-cols-[32px_1fr_180px_112px_auto]', selected && 'bg-primary-soft/40')}>
       <input type="checkbox" className="size-4 accent-[var(--primary)]" checked={selected} onChange={onToggle} aria-label={item.name} />
       {editing ? (
         <form
@@ -185,7 +185,7 @@ export function DictionariesPage() {
       ) : null}
 
       <Card className="overflow-hidden">
-        <div className="hidden grid-cols-[32px_1fr_180px_80px_auto] gap-3 border-b border-border px-4 py-2.5 text-xs font-medium text-subtle sm:grid">
+        <div className="hidden grid-cols-[32px_1fr_180px_112px_auto] gap-3 border-b border-border px-4 py-2.5 text-xs font-medium text-subtle sm:grid">
           <span />
           <span>{t(type)}</span>
           <span>{type === 'positions' ? t('group') : ''}</span>

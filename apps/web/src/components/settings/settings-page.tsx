@@ -18,9 +18,10 @@ import { useMe, useUpdateMe } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { IntegrationsSection } from './integrations';
 import { LegalLinks } from '@/components/legal/legal-links';
+import { DonateCard, useDonateUrl } from '@/components/shell/donate';
 import { EmailImportSection } from './email-import';
 
-const SECTIONS = ['profile', 'preferences', 'integrations', 'security', 'sessions', 'data'] as const;
+const BASE_SECTIONS = ['profile', 'preferences', 'integrations', 'security', 'sessions', 'data'] as const;
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -61,6 +62,8 @@ export function SettingsPage() {
   const locale = useLocale();
   const { theme, setTheme } = useTheme();
   const { data: me, isLoading } = useMe();
+  const donateUrl = useDonateUrl();
+  const SECTIONS = donateUrl ? ([...BASE_SECTIONS, 'support'] as const) : BASE_SECTIONS;
   const update = useUpdateMe();
   const [name, setName] = useState('');
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '' });
@@ -86,7 +89,7 @@ export function SettingsPage() {
       if (el) io.observe(el);
     });
     return () => io.disconnect();
-  }, [isLoading]);
+  }, [isLoading, SECTIONS]);
 
   const patch = (body: Parameters<typeof update.mutate>[0]) =>
     update.mutate(body, { onSuccess: () => toast.success(tc('saved')), onError: (e) => toast.error(te(e)) });
@@ -330,6 +333,11 @@ export function SettingsPage() {
               ) : null}
             </div>
           </Section>
+          {donateUrl ? (
+            <Section id="support" title={t('support')}>
+              <DonateCard />
+            </Section>
+          ) : null}
           <LegalLinks />
         </div>
       </div>

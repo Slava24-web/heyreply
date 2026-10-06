@@ -4,10 +4,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { LoginAttempts } from './login-attempts';
 import { PasswordHasher } from './password-hasher';
+import { MailModule } from '../mail/mail.module';
 import { DictionariesModule } from '../dictionaries/dictionaries.module';
 
 @Module({
-  imports: [JwtModule.register({}), DictionariesModule],
+  imports: [JwtModule.register({}), DictionariesModule, MailModule],
   controllers: [AuthController],
   providers: [AuthService, LoginAttempts, PasswordHasher],
   exports: [AuthService, JwtModule],

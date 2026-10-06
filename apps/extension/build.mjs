@@ -22,13 +22,21 @@ for (const size of [16, 32, 48, 128]) await sharp(Buffer.from(ICON(size))).png()
 const manifest = JSON.parse(await (await import('node:fs/promises')).readFile('src/manifest.json', 'utf8'));
 // Release builds point the store listing at the production site: HEYREPLY_SITE_URL=https://heyreply.app pnpm ext:zip
 if (process.env.HEYREPLY_SITE_URL) manifest.homepage_url = new URL(process.env.HEYREPLY_SITE_URL).origin;
+// The page-world network hook runs wherever the regular content script does
+manifest.content_scripts.push({
+  matches: [...new Set(manifest.content_scripts.flatMap((c) => c.matches))],
+  js: ['hook.js'],
+  run_at: 'document_start',
+  world: 'MAIN',
+  all_frames: true,
+});
 if (e2e) manifest.host_permissions = ['http://localhost/*'];
 await writeFile(`${out}/manifest.json`, JSON.stringify(manifest, null, 2));
 await cp('src/popup/popup.html', `${out}/popup.html`);
 await cp('src/popup/popup.css', `${out}/popup.css`);
 
 const options = {
-  entryPoints: { background: 'src/background.ts', content: 'src/content/index.ts', popup: 'src/popup/popup.ts' },
+  entryPoints: { background: 'src/background.ts', content: 'src/content/index.ts', hook: 'src/content/hook.ts', popup: 'src/popup/popup.ts' },
   outdir: out,
   bundle: true,
   format: 'iife',

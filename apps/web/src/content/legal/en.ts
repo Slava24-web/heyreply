@@ -66,12 +66,14 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         list: [
           `Hosting provider (servers and database): ${o.hosting}.`,
           'Cloudflare, Inc. (USA): receiving and forwarding e-mails sent to the import address (Email Routing and Workers) and storing encrypted database backups (R2), where these features are enabled.',
+          'E-mail delivery provider (SMTP): sending the password-reset link to your e-mail address, where this feature is enabled.',
         ],
       },
       {
         title: '8. International transfers',
         paragraphs: [
-          'The providers in section 7 may be located in, or process data in, countries other than yours, including countries whose data-protection level differs from that of Russia or the EU. We transfer only what the service needs and use contractual safeguards (including standard contractual clauses) where the law requires. For users in Russia the transfer is based on your consent.',
+          'The Operator is based in the Republic of Serbia and the service is open to users from many countries. The providers in section 7 may be located in, or process data in, countries other than yours, including countries whose data-protection level differs from that of Russia, Serbia or the EU. We transfer only what the service needs and use contractual safeguards (including standard contractual clauses) where the law requires. For users in Russia and in other countries where this is required, the transfer is based on your consent.',
+          'We apply the same rules to all users. We follow Serbian data-protection law and the GDPR and, where applicable, the laws of the user’s country. Some countries’ laws (for example data-localisation rules) may require data to be stored differently; we deliberately do not host data separately for each country, and access to the service may therefore be restricted in such a country.',
         ],
       },
       {
@@ -98,9 +100,9 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
           'Delete your account and all data: “Settings → Delete account”.',
           'Withdraw consent, restrict or object to processing: write to the address in section 1; withdrawing consent ends the account.',
           'Receive your data in a machine-readable format (JSON and CSV export).',
-          'Complain to Roskomnadzor (users in Russia), to the data-protection authority in your country (users in the EU/EEA), or to a court.',
+          'Complain to a data-protection authority: in the Republic of Serbia the Commissioner for Information of Public Importance and Personal Data Protection (poverenik.rs), for users in the EU/EEA the authority in your country, for users in Russia Roskomnadzor; or go to court.',
         ],
-        paragraphs: ['We answer requests within the time set by law: up to 10 working days in Russia, up to one month in the EU.'],
+        paragraphs: ['We answer requests within the time set by law: up to 10 working days in Russia, up to one month in the EU and Serbia.'],
       },
       {
         title: '12. Age',
@@ -120,6 +122,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         title: '1. General',
         paragraphs: [
           `These terms are an agreement between ${who(o)} and you as a user of heyreply: a web app for tracking job applications, a browser extension and e-mail import (the “Service”). By registering you accept these terms and the Privacy Policy.`,
+          'The Service is free: no subscriptions, no ads, no paid features. The author may accept voluntary donations through a third-party service. A donation is not a payment for the Service, gives the user nothing in the Service, creates no obligation as to availability or quality, and is non-refundable.',
         ],
       },
       {
@@ -184,7 +187,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
       {
         title: '11. Governing law and disputes',
         paragraphs: [
-          `These terms are governed by the law of the Russian Federation, unless mandatory rules of the country where you live as a consumer provide otherwise. We try to settle disputes by negotiation; send claims to ${o.email}. If that fails, the dispute is heard by the court determined under the applicable jurisdiction rules.`,
+          `These terms are governed by the law of the Republic of Serbia, unless mandatory rules of the country where you live as a consumer provide otherwise. We try to settle disputes by negotiation; send claims to ${o.email}. If that fails, the dispute is heard by the competent court of the Republic of Serbia, unless mandatory rules of your country provide otherwise.`,
         ],
       },
       { title: '12. Contact', paragraphs: [`${o.name}, ${o.address}. E-mail: ${o.email}.`] },

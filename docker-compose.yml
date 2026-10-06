@@ -35,6 +35,12 @@ services:
       # E-mail import via Cloudflare Email Routing (optional, see README)
       INBOUND_EMAIL_DOMAIN: ${INBOUND_EMAIL_DOMAIN:-}
       INBOUND_SECRET: ${INBOUND_SECRET:-}
+      # Password-reset e-mails (optional; without SMTP_URL no mail is sent). MAIL_FROM is required with it.
+      SMTP_URL: ${SMTP_URL:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      # Per-user caps
+      MAX_APPLICATIONS_PER_USER: ${MAX_APPLICATIONS_PER_USER:-5000}
+      MAX_DICTIONARY_ITEMS_PER_USER: ${MAX_DICTIONARY_ITEMS_PER_USER:-2000}
     depends_on:
       postgres:
         condition: service_healthy
@@ -56,6 +62,7 @@ services:
         HTTPS_ENABLED: ${HTTPS_ENABLED:-false}
     environment:
       HTTPS_ENABLED: ${HTTPS_ENABLED:-false}
+      DONATE_URL: ${DONATE_URL:-}
     depends_on:
       api:
         condition: service_healthy
