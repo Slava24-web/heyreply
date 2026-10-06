@@ -1,0 +1,11 @@
+# Cloudflare Email Worker for heyreply e-mail import.
+# 1. Add your domain (or a subdomain like in.example.com) to Cloudflare and enable Email Routing.
+# 2. `pnpm --filter email-worker deploy`, then `wrangler secret put INBOUND_SECRET` (same value as the API's INBOUND_SECRET).
+# 3. Email Routing → Routing rules → Catch-all address → Action "Send to a Worker" → heyreply-email-import.
+name = "heyreply-email-import"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Public URL of the heyreply web app (the API is reached through it at /api/v1/inbound/email)
+HEYREPLY_API_URL = "https://heyreply.example.com"

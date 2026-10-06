@@ -1,0 +1,17 @@
+{
+  "name": "heyreply",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel --filter web --filter api dev",
+    "dev:api": "pnpm --filter api dev",
+    "dev:web": "pnpm --filter web dev",
+    "build": "pnpm --filter @heyreply/shared build && pnpm --filter api build && pnpm --filter web build",
+    "db:start": "pg_ctl -D .pgdata -o \"-p 5433 -k /tmp\" -l .pgdata/server.log start",
+    "db:stop": "pg_ctl -D .pgdata stop",
+    "db:migrate": "pnpm --filter api prisma:migrate",
+    "db:seed": "pnpm --filter api seed",
+    "ext:build": "pnpm --filter @heyreply/shared build && pnpm --filter extension build",
+    "ext:zip": "pnpm --filter @heyreply/shared build && pnpm --filter extension zip"
+  },
+  "packageManager": "pnpm@12.6.0"
+}

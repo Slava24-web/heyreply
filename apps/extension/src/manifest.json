@@ -1,0 +1,104 @@
+{
+  "manifest_version": 3,
+  "name": "heyreply — импорт откликов",
+  "short_name": "heyreply",
+  "description": "Автоматически добавляет ваши отклики с hh.ru, LinkedIn, Хабр Карьеры, Авито, Работа.ру, Djinni, Glassdoor, Greenhouse, Lever и ещё 17 площадок в heyreply.",
+  "version": "0.1.0",
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "action": {
+    "default_title": "heyreply",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/16.png",
+      "32": "icons/32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "permissions": [
+    "storage",
+    "alarms"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.hh.ru/*",
+        "https://*.hh.kz/*",
+        "https://*.rabota.by/*",
+        "https://www.linkedin.com/*",
+        "https://career.habr.com/*",
+        "https://*.superjob.ru/*",
+        "https://getmatch.ru/*",
+        "https://*.indeed.com/*",
+        "https://*.avito.ru/*",
+        "https://*.rabota.ru/*",
+        "https://*.zarplata.ru/*",
+        "https://*.trudvsem.ru/*",
+        "https://geekjob.ru/*",
+        "https://djinni.co/*",
+        "https://*.work.ua/*",
+        "https://*.robota.ua/*",
+        "https://*.rabota.ua/*",
+        "https://*.glassdoor.com/*",
+        "https://*.glassdoor.co.uk/*",
+        "https://*.glassdoor.de/*",
+        "https://*.glassdoor.fr/*",
+        "https://*.glassdoor.ca/*",
+        "https://*.glassdoor.co.in/*",
+        "https://*.ziprecruiter.com/*",
+        "https://*.ziprecruiter.co.uk/*",
+        "https://*.monster.com/*",
+        "https://*.monster.co.uk/*",
+        "https://*.monster.de/*",
+        "https://wellfound.com/*",
+        "https://angel.co/*",
+        "https://*.welcometothejungle.com/*",
+        "https://*.otta.com/*",
+        "https://*.dice.com/*",
+        "https://*.stepstone.de/*",
+        "https://*.stepstone.at/*",
+        "https://*.stepstone.nl/*",
+        "https://*.stepstone.be/*",
+        "https://*.xing.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.greenhouse.io/*",
+        "https://jobs.lever.co/*",
+        "https://jobs.eu.lever.co/*",
+        "https://apply.workable.com/*",
+        "https://jobs.ashbyhq.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "extension@heyreply.app",
+      "strict_min_version": "128.0"
+    }
+  }
+}

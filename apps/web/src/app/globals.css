@@ -1,0 +1,318 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Palette rule: no blue, green, orange, yellow or brown.
+ * Plum / orchid / fuchsia / raspberry / wine / lavender / graphite only.
+ */
+:root {
+  --bg: #faf7fb;
+  --surface: #ffffff;
+  --surface-2: #f4eef6;
+  --surface-3: #ece3ef;
+  --border: #e8dfec;
+  --border-strong: #d8cbde;
+  --text: #1f1724;
+  --text-muted: #6f6378;
+  --text-subtle: #9a8fa2;
+  --primary: #7a2e8e;
+  --primary-hover: #6a2580;
+  --primary-fg: #ffffff;
+  --primary-soft: #f1e4f5;
+  --accent: #d6336c;
+  --accent-soft: #fbe5ee;
+  --secondary: #b48ead;
+  --danger: #9e2a48;
+  --ring: #a855c7;
+
+  --hero-from: #f6e8f2;
+  --hero-to: #eee5f7;
+  --glow-1: #f3e3f0;
+  --glow-2: #ece3f6;
+
+  --st-applied: #8a8091;
+  --st-viewed: #9a7fc4;
+  --st-screening: #a855c7;
+  --st-test: #c026a3;
+  --st-interview: #7a2e8e;
+  --st-offer: #d6336c;
+  --st-rejected: #9e2a48;
+  --st-declined: #6f6378;
+  --st-noresponse: #b3a9b9;
+
+  /* Categorical chart slots 1–4 validated (lightness, chroma, CVD, contrast) vs #fff. 5–7: decorative only. */
+  --chart-1: #7a2e8e;
+  --chart-2: #e0457b;
+  --chart-3: #9c6bd9;
+  --chart-4: #8e2442;
+  --chart-5: #9e2a48;
+  --chart-6: #c026a3;
+  --chart-7: #6f6378;
+
+  --heat-0: #f1ebf3;
+  --heat-1: #e3cdea;
+  --heat-2: #c99bd8;
+  --heat-3: #a45fbd;
+  --heat-4: #7a2e8e;
+
+  --shadow-card: 0 1px 2px rgb(31 23 36 / 6%), 0 8px 24px -12px rgb(122 46 142 / 14%);
+  --shadow-pop: 0 12px 40px -12px rgb(31 23 36 / 28%);
+
+  /* Cards: soft plum gradient + frosted glass */
+  --card-from: rgb(255 255 255 / 88%);
+  --card-to: rgb(240 226 247 / 76%);
+  --card-border: rgb(226 214 233 / 85%);
+  --card-highlight: rgb(255 255 255 / 85%);
+  --card-shadow: var(--shadow-card);
+}
+
+.dark {
+  --bg: #131015;
+  --surface: #1b171f;
+  --surface-2: #241e29;
+  --surface-3: #2d2533;
+  --border: #352c3b;
+  --border-strong: #463a4e;
+  --text: #f4eef6;
+  --text-muted: #a99db0;
+  --text-subtle: #7d7184;
+  --primary: #c58bdb;
+  --primary-hover: #d3a2e5;
+  --primary-fg: #1b0f20;
+  --primary-soft: #33233b;
+  --accent: #f0628f;
+  --accent-soft: #3a1d29;
+  --secondary: #8f6e8a;
+  --danger: #e0708c;
+  --ring: #c58bdb;
+
+  --hero-from: #2a1a2f;
+  --hero-to: #1e1726;
+  --glow-1: rgb(42 24 48 / 70%);
+  --glow-2: rgb(31 22 48 / 70%);
+
+  --st-applied: #a99db0;
+  --st-viewed: #b9a3d9;
+  --st-screening: #c98ae0;
+  --st-test: #e45cc4;
+  --st-interview: #c58bdb;
+  --st-offer: #f0628f;
+  --st-rejected: #d0607d;
+  --st-declined: #8b7f92;
+  --st-noresponse: #6d6373;
+
+  /* Validated vs #1b171f */
+  --chart-1: #b37ad0;
+  --chart-2: #ec4f7a;
+  --chart-3: #8a62d6;
+  --chart-4: #b8305a;
+  --chart-5: #d0607d;
+  --chart-6: #e45cc4;
+  --chart-7: #8b7f92;
+
+  --heat-0: #241e29;
+  --heat-1: #3d2847;
+  --heat-2: #5e3670;
+  --heat-3: #8f4fa8;
+  --heat-4: #c58bdb;
+
+  --shadow-card: 0 0 0 1px var(--border);
+  --shadow-pop: 0 16px 48px -12px rgb(0 0 0 / 60%);
+
+  --card-from: rgb(50 36 60 / 80%);
+  --card-to: rgb(26 21 31 / 72%);
+  --card-border: rgb(255 255 255 / 9%);
+  --card-highlight: rgb(255 255 255 / 7%);
+  /* the theme's card shadow is a 1px ring — on glass cards it doubles the border */
+  --card-shadow: 0 16px 32px -20px rgb(0 0 0 / 70%);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-subtle: var(--text-subtle);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-fg: var(--primary-fg);
+  --color-primary-soft: var(--primary-soft);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-secondary: var(--secondary);
+  --color-danger: var(--danger);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-unbounded), var(--font-onest), ui-sans-serif, sans-serif;
+
+  --radius-field: 10px;
+  --radius-card: 16px;
+  --radius-panel: 24px;
+
+  --shadow-card: var(--shadow-card);
+  --shadow-pop: var(--shadow-pop);
+
+  --animate-fade-up: fade-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  /* Long unbroken strings (addresses, tokens, URLs) wrap instead of overflowing narrow screens */
+  overflow-wrap: break-word;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(1200px 600px at 85% -10%, var(--glow-1) 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, var(--glow-2) 0%, transparent 55%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-feature-settings: 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Theme switch: smooth colors, but never animate on first paint */
+html.theme-ready body,
+html.theme-ready .surface-t {
+  transition:
+    background-color 200ms ease,
+    color 200ms ease,
+    border-color 200ms ease;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-gradient {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.035'/%3E%3C/svg%3E"),
+    linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
+}
+
+/* In the components layer so utilities (hover:, bg-…) can still override a card */
+@layer components {
+  .card-glass,
+  .card-tint {
+    background-image: linear-gradient(150deg, var(--card-from) 0%, var(--card-to) 100%);
+    background-color: transparent;
+    border-color: var(--card-border);
+    box-shadow:
+      inset 0 1px 0 var(--card-highlight),
+      var(--card-shadow);
+  }
+
+  /* Frosted glass only on large, few-per-page surfaces: blur is expensive on long lists */
+  .card-glass {
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+  }
+
+  /* List items: the same gradient, nearly opaque, no blur */
+  .card-tint {
+    --card-from: color-mix(in srgb, var(--surface) 96%, var(--primary-soft));
+    --card-to: color-mix(in srgb, var(--surface) 82%, var(--primary-soft));
+  }
+
+  @media (prefers-reduced-transparency: reduce) {
+    .card-glass,
+    .card-tint {
+      background-image: none;
+      background-color: var(--surface);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/*
+ * Keyboard focus ring for clickable controls. In the base layer with zero specificity (:where) so utilities like
+ * `outline-none` still win. Text fields are excluded: they show focus with their own border + soft ring.
+ */
+@layer base {
+  :where(a, button, summary, [role='button'], [role='option'], [role='radio'], [role='tab'], [role='menuitem'], [role='row'], [tabindex]:not(input, textarea, select), input[type='checkbox'], input[type='radio']):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  :where(input:not([type='checkbox'], [type='radio']), textarea, select):focus-visible {
+    outline: none;
+  }
+}
+
+::selection {
+  background: var(--primary-soft);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Grid/flex children must be allowed to shrink so inner scroll areas (heatmap, tables) don't widen the page */
+@layer base {
+  :where(main .grid > *, main .flex > *) {
+    min-width: 0;
+  }
+}
+
+/* Tailwind v4 preflight resets buttons to cursor: default — restore the pointer for every interactive control */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+[role='option'],
+[role='menuitem'],
+[role='radio'],
+[role='tab'],
+select:not(:disabled),
+summary,
+label:has(> input[type='checkbox']),
+input[type='checkbox']:not(:disabled) {
+  cursor: pointer;
+}

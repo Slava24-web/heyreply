@@ -1,0 +1,46 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <span class="logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="3" rx="1.5" fill="currentColor" opacity=".55"/><rect x="6" y="10.5" width="12" height="3" rx="1.5" fill="currentColor" opacity=".8"/><circle cx="12" cy="18.2" r="2.2" fill="#e0457b"/></svg>
+      </span>
+      <strong>heyreply</strong>
+      <span id="conn" class="pill"></span>
+    </header>
+
+    <section id="connect" hidden>
+      <p class="muted" data-i18n="connectHint"></p>
+      <label><span data-i18n="server"></span><input id="server" type="url" spellcheck="false" /></label>
+      <label><span data-i18n="token"></span><input id="token" type="password" placeholder="otk_…" spellcheck="false" autocomplete="off" /></label>
+      <p id="formError" class="error" hidden></p>
+      <button id="save" class="primary" data-i18n="connect"></button>
+    </section>
+
+    <section id="main" hidden>
+      <div class="account"><span id="who"></span><button id="disconnect" class="link" data-i18n="disconnect"></button></div>
+      <div class="stats">
+        <div><b id="created">0</b><span data-i18n="created"></span></div>
+        <div><b id="updated">0</b><span data-i18n="updated"></span></div>
+        <div><b id="queued">0</b><span data-i18n="queued"></span></div>
+      </div>
+      <p id="syncInfo" class="muted small"></p>
+      <p id="syncError" class="error small" hidden></p>
+      <h2 data-i18n="recent"></h2>
+      <ul id="recent"></ul>
+      <p id="recentEmpty" class="muted small" data-i18n="recentEmpty"></p>
+      <h2 data-i18n="platforms"></h2>
+      <div id="platforms" class="platforms"></div>
+      <div class="actions">
+        <button id="flush" data-i18n="syncNow"></button>
+        <a id="open" class="button primary" target="_blank" rel="noreferrer" data-i18n="openApp"></a>
+      </div>
+    </section>
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>

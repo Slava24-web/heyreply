@@ -1,0 +1,10 @@
+node_modules
+.next
+dist
+.env
+.env.local
+.pgdata
+apps/api/src/generated
+*.tsbuildinfo
+.DS_Store
+.idea
