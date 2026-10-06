@@ -1,13 +1,13 @@
 import { HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as argon2 from 'argon2';
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
-import type { LoginInput, RegisterInput } from '@heyreply/shared';
+import { LEGAL_VERSION, type LoginInput, type RegisterInput } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppError } from '../common/errors';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
 import { config } from '../config';
 import { LoginAttempts } from './login-attempts';
+import { PasswordHasher } from './password-hasher';
 
 /** A rotated refresh token replayed within this window is a concurrent-tab race, not theft. */
 const ROTATION_GRACE_MS = 15_000;
@@ -28,20 +28,33 @@ const safeEqualHex = (a: string, b: string) => a.length === b.length && timingSa
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   /** Verified against when the e-mail is unknown, so response time doesn't reveal which accounts exist. */
-  private dummyHash: Promise<string> = argon2.hash(randomBytes(16).toString('hex'));
+  private dummyHash?: Promise<string>;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly dictionaries: DictionariesService,
     private readonly attempts: LoginAttempts,
+    private readonly hasher: PasswordHasher,
   ) {}
+
+  private getDummyHash() {
+    return (this.dummyHash ??= this.hasher.hash(randomBytes(16).toString('hex')));
+  }
 
   async register(input: RegisterInput, meta: Meta) {
     const exists = await this.prisma.user.findUnique({ where: { email: input.email } });
     if (exists) throw new AppError(HttpStatus.CONFLICT, 'EMAIL_TAKEN');
     const user = await this.prisma.user.create({
-      data: { email: input.email, name: input.name, locale: input.locale ?? 'ru', passwordHash: await argon2.hash(input.password) },
+      data: {
+        email: input.email,
+        name: input.name,
+        locale: input.locale ?? 'ru',
+        passwordHash: await this.hasher.hash(input.password),
+        termsAcceptedAt: new Date(),
+        termsVersion: LEGAL_VERSION,
+        termsAcceptedIp: meta.ip,
+      },
     });
     await this.dictionaries.seedSystemSources(user.id, user.locale);
     return { user, tokens: await this.issue(user.id, user.email, meta) };
@@ -50,14 +63,14 @@ export class AuthService {
   async login(input: LoginInput, meta: Meta) {
     if (this.attempts.isLocked(input.email, meta.ip)) throw new AppError(HttpStatus.TOO_MANY_REQUESTS, 'LOGIN_LOCKED');
     const user = await this.prisma.user.findUnique({ where: { email: input.email } });
-    const ok = await argon2.verify(user?.passwordHash ?? (await this.dummyHash), input.password);
+    const ok = await this.hasher.verify(user?.passwordHash ?? (await this.getDummyHash()), input.password);
     if (!user || !ok) {
       this.attempts.fail(input.email, meta.ip);
       throw new AppError(HttpStatus.UNAUTHORIZED, 'INVALID_CREDENTIALS');
     }
     this.attempts.success(input.email, meta.ip);
-    if (argon2.needsRehash(user.passwordHash)) {
-      await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await argon2.hash(input.password) } });
+    if (this.hasher.needsRehash(user.passwordHash)) {
+      await this.prisma.user.update({ where: { id: user.id }, data: { passwordHash: await this.hasher.hash(input.password) } });
     }
     return { user, tokens: await this.issue(user.id, user.email, meta) };
   }
@@ -131,23 +144,23 @@ export class AuthService {
     if (!user) throw new AppError(HttpStatus.BAD_REQUEST, 'RESET_TOKEN_INVALID');
     await this.prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash: await argon2.hash(password), resetTokenHash: null, resetTokenExpires: null },
+      data: { passwordHash: await this.hasher.hash(password), resetTokenHash: null, resetTokenExpires: null },
     });
     await this.revokeAll(user.id);
   }
 
   async verifyPassword(userId: string, password: string) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!(await argon2.verify(user.passwordHash, password))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
+    if (!(await this.hasher.verify(user.passwordHash, password))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
   }
 
   /** Changing the password signs out every other device. */
   async changePassword(userId: string, current: string, next: string, currentSessionId?: string) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!(await argon2.verify(user.passwordHash, current))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
+    if (!(await this.hasher.verify(user.passwordHash, current))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
     await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: await argon2.hash(next), resetTokenHash: null, resetTokenExpires: null },
+      data: { passwordHash: await this.hasher.hash(next), resetTokenHash: null, resetTokenExpires: null },
     });
     await this.revokeAll(userId, currentSessionId);
   }

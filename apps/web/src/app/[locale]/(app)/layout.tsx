@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/shell/sidebar';
 import { Topbar } from '@/components/shell/topbar';
 import { MobileNav } from '@/components/shell/mobile-nav';
 import { CommandPalette } from '@/components/shell/command-palette';
+import { ConsentGate } from '@/components/legal/consent-gate';
 import { UIProvider } from '@/components/shell/ui-context';
 import { ThemeSync } from '@/components/shell/theme-sync';
 import { QuickAddSheet } from '@/components/applications/quick-add';
@@ -11,6 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <UIProvider>
       <ThemeSync />
+      <ConsentGate />
       <div className="flex min-h-dvh">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">

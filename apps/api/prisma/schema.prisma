@@ -57,6 +57,10 @@ model User {
   ghostingDays      Int        @default(14)
   resetTokenHash    String?
   resetTokenExpires DateTime?
+  /// Proof of consent: when, to which version of the legal documents and from which IP. Null for accounts created before consent was collected.
+  termsAcceptedAt   DateTime?
+  termsVersion      String?
+  termsAcceptedIp   String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 

@@ -55,7 +55,7 @@ const call = async (path, init = {}) => {
 };
 const email = `worker-${Date.now()}@heyreply.test`;
 const password = 'testpass123';
-await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Worker', email, password }) });
+await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Worker', email, password, acceptTerms: true, acceptPersonalData: true }) });
 const { address } = await call('/me/inbound', { method: 'POST' });
 console.log('  · address', address);
 

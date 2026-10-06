@@ -258,6 +258,16 @@ export class ApplicationsService {
     return rows.map(toApplicationDto);
   }
 
+  /** Everything the user has, for the data export: archived and not-yet-purged deleted applications included. */
+  async exportEverything(userId: string) {
+    const rows = await this.prisma.application.findMany({
+      where: { userId },
+      include: { ...applicationInclude, statusHistory: { orderBy: { changedAt: 'asc' } } },
+      orderBy: { appliedAt: 'desc' },
+    });
+    return rows.map((r) => ({ ...toApplicationDto(r), archivedAt: r.archivedAt?.toISOString() ?? null, deletedAt: r.deletedAt?.toISOString() ?? null }));
+  }
+
   toCsv(items: ApplicationDto[]) {
     const head = [
       'appliedAt', 'company', 'position', 'status', 'source', 'location', 'workFormat',

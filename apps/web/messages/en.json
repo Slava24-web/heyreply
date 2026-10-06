@@ -87,13 +87,18 @@
     "resetTitle": "New password",
     "resetSubmit": "Save password",
     "resetDone": "Password changed. Sign in with the new one.",
-    "backToLogin": "Back to sign in"
+    "backToLogin": "Back to sign in",
+    "acceptTerms": "I accept the <terms>Terms of Service</terms> and the <privacy>Privacy Policy</privacy>",
+    "acceptPersonalData": "I give my <consent>consent to personal data processing</consent>",
+    "consentRequired": "You can’t create an account without this consent"
   },
   "errors": {
     "INVALID_CREDENTIALS": "Wrong email or password",
     "EMAIL_TAKEN": "An account with this email already exists",
     "LOGIN_LOCKED": "Too many attempts. Try again in 15 minutes",
     "TOO_MANY_REQUESTS": "Too many requests. Please wait a moment",
+    "SERVER_BUSY": "The server is busy right now. Try again in a few seconds",
+    "PAYLOAD_TOO_LARGE": "Request is too large",
     "RESET_TOKEN_INVALID": "The link is invalid or expired",
     "WRONG_PASSWORD": "Current password is incorrect",
     "DICT_IN_USE": "This value is used by applications — merge it into another one first",
@@ -478,5 +483,18 @@
     "disable": "Turn off e-mail import",
     "rotateConfirm": "Change the forwarding address?",
     "rotateText": "The old address stops accepting mail immediately — update it in your forwarding settings."
+  },
+  "legal": {
+    "nav": "Legal documents",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "consent": "Consent to data processing",
+    "edition": "Edition of {date}",
+    "notAffiliated": "heyreply is not affiliated with or endorsed by the job boards named in the service.",
+    "gateTitle": "Our legal documents were updated",
+    "gateText": "To keep using heyreply, please accept the Terms of Service and Privacy Policy and give your consent to personal data processing.",
+    "gateAccept": "Accept and continue",
+    "gateLogout": "Sign out",
+    "gateError": "Could not save your consent. Please try again."
   }
 }

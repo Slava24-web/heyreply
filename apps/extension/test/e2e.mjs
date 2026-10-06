@@ -35,7 +35,7 @@ const call = async (path, init = {}) => {
   if (set.length) cookie = set.map((c) => c.split(';')[0]).join('; ');
   return { status: res.status, body: await res.json().catch(() => null) };
 };
-await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Ext E2E', email, password }) });
+await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Ext E2E', email, password, acceptTerms: true, acceptPersonalData: true }) });
 const { body: tok } = await call('/me/tokens', { method: 'POST', body: JSON.stringify({ name: 'e2e' }) });
 log('user + token created');
 

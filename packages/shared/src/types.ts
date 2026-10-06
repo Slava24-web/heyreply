@@ -18,6 +18,8 @@ export interface UserDto {
   defaultSalaryType: SalaryType;
   ghostingDays: number;
   createdAt: string;
+  /** The user has accepted the current edition of the legal documents */
+  legalAccepted: boolean;
 }
 
 export interface StatusHistoryDto {

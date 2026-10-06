@@ -4,6 +4,8 @@ import { routing } from './i18n/routing';
 
 const handleI18n = createMiddleware(routing);
 const PUBLIC = ['/login', '/register', '/forgot-password', '/reset-password'];
+// Legal documents are readable by everyone, signed in or not
+const LEGAL = ['/privacy', '/terms', '/consent'];
 const isDev = process.env.NODE_ENV === 'development';
 const httpsEnabled = !isDev && process.env.HTTPS_ENABLED !== 'false';
 
@@ -44,9 +46,10 @@ export default function proxy(request: NextRequest) {
   const locale = hasLocalePrefix ? segments[1] : cookieLocale && (routing.locales as readonly string[]).includes(cookieLocale) ? cookieLocale : routing.defaultLocale;
   const path = hasLocalePrefix ? '/' + segments.slice(2).join('/') : pathname;
   const signedIn = request.cookies.has('has_session');
+  const isLegal = LEGAL.includes(path);
   const isPublic = PUBLIC.some((p) => path === p || path.startsWith(p + '/'));
 
-  if (!signedIn && !isPublic) {
+  if (!signedIn && !isPublic && !isLegal) {
     const url = new URL(`/${locale}/login`, request.url);
     if (path !== '/' && path !== '') url.searchParams.set('next', path);
     return withCsp(NextResponse.redirect(url), csp);
