@@ -59,6 +59,8 @@ docker compose exec -u root api node_modules/.bin/ts-node --transpile-only prism
 
 Поднимаются четыре контейнера: Postgres, API (миграции применяются при старте, healthcheck по `/api/health`), веб и edge-прокси Caddy. Приложение открывается на http://localhost:3000 через Caddy. Caddy отбрасывает клиентский `X-Forwarded-For`, поэтому IP-лимиты нельзя обойти подменой заголовка; в production замените в [deploy/Caddyfile](deploy/Caddyfile) `:80` на домен, чтобы Caddy сам выпустил TLS-сертификат, и выставьте `HTTPS_ENABLED=true`, `COOKIE_SECURE=true`. Все порты слушают только `127.0.0.1` (Postgres на 5434, чтобы не конфликтовать с локальной базой), контейнеры работают не от root. API не запустится в production с секретом короче 32 символов или с секретом из примеров.
 
+Деплой на сервер (образы из GHCR, бэкапы, файрвол, мониторинг): [docs/DEPLOY.md](docs/DEPLOY.md).
+
 Порты 3000 и 4000 те же, что у `pnpm dev`, поэтому одновременно запускать оба варианта нельзя.
 
 ## Расширение для браузера (автоимпорт откликов)

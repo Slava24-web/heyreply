@@ -1,11 +1,12 @@
 # Edge proxy in front of Next.js. Caddy discards X-Forwarded-For sent by clients (they are not trusted proxies)
 # and sets it to the real peer address, so the API's rate limits and session IPs can't be spoofed.
-# For production replace ":80" with your domain — Caddy then obtains a TLS certificate automatically.
+# SITE_ADDRESS defaults to ":80" (plain http, local). In production set it to your domain in .env —
+# Caddy then obtains and renews a TLS certificate automatically and redirects http → https.
 {
 	admin off
 }
 
-:80 {
+{$SITE_ADDRESS::80} {
 	encode zstd gzip
 
 	# The Cloudflare Email Worker posts whole messages (base64) — allow up to 3 MB there only

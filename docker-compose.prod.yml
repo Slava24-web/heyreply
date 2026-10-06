@@ -1,0 +1,101 @@
+# Production stack: images are built in GitHub Actions (.github/workflows/images.yml) and pulled from GHCR — never built on the server.
+# Usage: see docs/DEPLOY.md. Secrets and settings come from ./.env (see .env.example).
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
+x-restart: &restart
+  restart: unless-stopped
+
+services:
+  postgres:
+    <<: *restart
+    image: postgres:16.15-alpine
+    logging: *default-logging
+    environment:
+      POSTGRES_USER: heyreply
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: heyreply
+    # Not published: reachable only by other containers of this stack
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U heyreply -d heyreply']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    <<: *restart
+    image: ${IMAGE_PREFIX:-ghcr.io/slava24-web/heyreply}-api:${IMAGE_TAG:?set IMAGE_TAG in .env (see deploy/deploy.sh)}
+    logging: *default-logging
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://heyreply:${POSTGRES_PASSWORD}@postgres:5432/heyreply?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET in .env (openssl rand -base64 48)}
+      ACCESS_TTL_SECONDS: 900
+      REFRESH_TTL_DAYS: 30
+      WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN in .env (https://your.domain)}
+      COOKIE_SECURE: 'true'
+      # web → api is one hop; Caddy in front overwrites X-Forwarded-For
+      TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      INBOUND_EMAIL_DOMAIN: ${INBOUND_EMAIL_DOMAIN:-}
+      INBOUND_SECRET: ${INBOUND_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:4000/api/health || exit 1']
+      interval: 10s
+      timeout: 3s
+      retries: 20
+
+  web:
+    <<: *restart
+    image: ${IMAGE_PREFIX:-ghcr.io/slava24-web/heyreply}-web:${IMAGE_TAG:?set IMAGE_TAG in .env (see deploy/deploy.sh)}
+    logging: *default-logging
+    depends_on:
+      api:
+        condition: service_healthy
+
+  edge:
+    <<: *restart
+    image: caddy:2.11.7-alpine
+    logging: *default-logging
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env (your domain, no scheme)}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Certificates: losing these means re-issuing and hitting Let's Encrypt rate limits
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+
+  backup:
+    <<: *restart
+    image: ${IMAGE_PREFIX:-ghcr.io/slava24-web/heyreply}-backup:${IMAGE_TAG:?set IMAGE_TAG in .env (see deploy/deploy.sh)}
+    logging: *default-logging
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_S3_ENDPOINT: ${BACKUP_S3_ENDPOINT:?set BACKUP_S3_* in .env (see docs/DEPLOY.md)}
+      BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:?}
+      BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:?}
+      BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:?}
+      BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-heyreply}
+      BACKUP_CRON: ${BACKUP_CRON:-15 3 * * *}
+      BACKUP_PING_URL: ${BACKUP_PING_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
