@@ -19,6 +19,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
       });
       return;
     }
+    // Errors thrown by Express body parsing (too large, bad encoding) carry their own 4xx status; they are client mistakes, not crashes
+    const status = (exception as { status?: unknown } | null)?.status;
+    if (typeof status === 'number' && status >= 400 && status < 500 && (exception as { expose?: unknown }).expose === true) {
+      const code = status === 413 ? 'PAYLOAD_TOO_LARGE' : 'BAD_REQUEST';
+      res.status(status).json({ statusCode: status, code, message: status === 413 ? 'Request body too large' : 'Bad request', details: null });
+      return;
+    }
     this.logger.error(exception instanceof Error ? exception.stack : String(exception));
     res.status(500).json({ statusCode: 500, code: 'INTERNAL_ERROR', message: 'Internal server error', details: null });
   }

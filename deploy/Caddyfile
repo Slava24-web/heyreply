@@ -4,10 +4,29 @@
 # Caddy then obtains and renews a TLS certificate automatically and redirects http → https.
 {
 	admin off
+
+	servers {
+		# Slow-client (slowloris) protection: nobody needs more than this to send a request to us
+		timeouts {
+			read_header 10s
+			read_body   30s
+			write       60s
+			idle        2m
+		}
+		# Only peers listed here may tell us the real client address via X-Forwarded-For; for everyone else the
+		# header is discarded. Default: nobody. Behind Cloudflare, deploy/cloudflare.sh puts its ranges here.
+		trusted_proxies static {$TRUSTED_PROXIES:127.0.0.1/32}
+	}
 }
 
 {$SITE_ADDRESS::80} {
 	encode zstd gzip
+
+	# Origin lock: with Cloudflare's ranges in ORIGIN_ALLOW (deploy/cloudflare.sh lock) requests that did not come
+	# through Cloudflare are dropped, so the server IP can't be attacked directly. Default allows everyone.
+	# Enforced here rather than in ufw because Docker-published ports bypass ufw.
+	@direct not remote_ip {$ORIGIN_ALLOW:0.0.0.0/0 ::/0}
+	abort @direct
 
 	# The Cloudflare Email Worker posts whole messages (base64) — allow up to 3 MB there only
 	@inbound path /api/v1/inbound/*

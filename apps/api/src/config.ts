@@ -17,6 +17,10 @@ const schema = z
     COOKIE_SECURE: z.enum(['true', 'false']).optional(),
     /** Number of reverse-proxy hops in front of the API whose X-Forwarded-For we trust (Next.js rewrite = 1). */
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
+    /** Password hashes (argon2, 64 MB each) running at once; libuv's pool has 4 threads that also serve DNS and fs. */
+    ARGON2_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(2),
+    /** Hashes allowed to wait for a slot; beyond that the request is rejected with 503 instead of piling up. */
+    ARGON2_QUEUE: z.coerce.number().int().min(0).max(1000).default(32),
     SWAGGER: z.enum(['true', 'false']).optional(),
     /** E-mail import: domain routed by Cloudflare Email Routing to the Email Worker, e.g. in.heyreply.app */
     INBOUND_EMAIL_DOMAIN: z.preprocess(emptyToUndefined, z.string().trim().toLowerCase().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/).optional()),
