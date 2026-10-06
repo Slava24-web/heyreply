@@ -118,6 +118,12 @@ export class ImportService {
       return linked ? 'linked' : 'unchanged';
     }
 
+    // Purged after the user deleted it: the retention job keeps only the vacancy id for this check
+    const purged = await tx.deletedImport.findUnique({
+      where: { userId_externalSource_externalId: { userId, externalSource: item.platform, externalId: item.externalId } },
+    });
+    if (purged) return 'unchanged';
+
     // New application
     const appliedAt = item.appliedAt ?? now;
     const status: AppStatus = item.status && item.status !== 'APPLIED' ? item.status : 'APPLIED';
