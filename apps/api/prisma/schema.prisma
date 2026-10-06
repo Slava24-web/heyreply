@@ -57,11 +57,16 @@ model User {
   ghostingDays      Int        @default(14)
   resetTokenHash    String?
   resetTokenExpires DateTime?
+  /// Proof of consent: when, to which version of the legal documents and from which IP. Null for accounts created before consent was collected.
+  termsAcceptedAt   DateTime?
+  termsVersion      String?
+  termsAcceptedIp   String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
 
   sessions     Session[]
   apiTokens    ApiToken[]
+  deletedImports   DeletedImport[]
   inboundAddresses InboundAddress[]
   inboundEmails    InboundEmail[]
   applications Application[]
@@ -279,4 +284,16 @@ model StatusHistory {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 
   @@index([applicationId, changedAt])
+}
+
+/// Left behind when a deleted imported application is purged for good: just the board's vacancy id, so the extension
+/// and e-mail import don't add back what the user deleted on purpose. No other data about the application is kept.
+model DeletedImport {
+  userId         String
+  externalSource String
+  externalId     String
+  deletedAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, externalSource, externalId])
 }

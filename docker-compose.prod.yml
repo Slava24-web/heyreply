@@ -40,7 +40,11 @@ services:
       WEB_ORIGIN: ${WEB_ORIGIN:?set WEB_ORIGIN in .env (https://your.domain)}
       COOKIE_SECURE: 'true'
       # web → api is one hop; Caddy in front overwrites X-Forwarded-For
+      # 1 = Caddy directly facing clients; 2 behind Cloudflare (deploy/cloudflare.sh sets it)
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
+      # Password hashes running at once / waiting for a slot; over that the API answers 503 instead of piling up
+      ARGON2_CONCURRENCY: ${ARGON2_CONCURRENCY:-2}
+      ARGON2_QUEUE: ${ARGON2_QUEUE:-32}
       INBOUND_EMAIL_DOMAIN: ${INBOUND_EMAIL_DOMAIN:-}
       INBOUND_SECRET: ${INBOUND_SECRET:-}
     depends_on:
@@ -56,6 +60,12 @@ services:
     <<: *restart
     image: ${IMAGE_PREFIX:-ghcr.io/slava24-web/heyreply}-web:${IMAGE_TAG:?set IMAGE_TAG in .env (see deploy/deploy.sh)}
     logging: *default-logging
+    environment:
+      # Operator details printed in the privacy policy, terms and consent (apps/web/src/lib/legal.ts); required so the site never ships with placeholders
+      LEGAL_OPERATOR_NAME: ${LEGAL_OPERATOR_NAME:?set LEGAL_OPERATOR_NAME in .env (full name or company that operates the service)}
+      LEGAL_OPERATOR_ADDRESS: ${LEGAL_OPERATOR_ADDRESS:?set LEGAL_OPERATOR_ADDRESS in .env}
+      LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:?set LEGAL_CONTACT_EMAIL in .env (where users send data requests)}
+      LEGAL_HOSTING: ${LEGAL_HOSTING:?set LEGAL_HOSTING in .env (hosting provider and country)}
     depends_on:
       api:
         condition: service_healthy
@@ -66,6 +76,9 @@ services:
     logging: *default-logging
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS in .env (your domain, no scheme)}
+      # Both are managed by deploy/cloudflare.sh; the defaults mean "not behind Cloudflare"
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-127.0.0.1/32}
+      ORIGIN_ALLOW: ${ORIGIN_ALLOW:-0.0.0.0/0 ::/0}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
       # Certificates: losing these means re-issuing and hitting Let's Encrypt rate limits
@@ -88,6 +101,8 @@ services:
       BACKUP_S3_BUCKET: ${BACKUP_S3_BUCKET:?}
       BACKUP_S3_ACCESS_KEY_ID: ${BACKUP_S3_ACCESS_KEY_ID:?}
       BACKUP_S3_SECRET_ACCESS_KEY: ${BACKUP_S3_SECRET_ACCESS_KEY:?}
+      # Public age key the dumps are encrypted to; the private key stays off the server (docs/DEPLOY.md)
+      BACKUP_AGE_RECIPIENT: ${BACKUP_AGE_RECIPIENT:?set BACKUP_AGE_RECIPIENT in .env (age1... public key, see docs/DEPLOY.md)}
       BACKUP_S3_PREFIX: ${BACKUP_S3_PREFIX:-heyreply}
       BACKUP_CRON: ${BACKUP_CRON:-15 3 * * *}
       BACKUP_PING_URL: ${BACKUP_PING_URL:-}

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Proves the latest off-site backup restores: downloads it, restores into a throwaway Postgres, prints row counts.
-# Run on the server (or any machine with docker + the prod .env): deploy/restore-test.sh
+# Run on a machine with docker + the prod .env. Backups are age-encrypted, so also pass the PRIVATE key (absolute path;
+# keep it off the server): AGE_IDENTITY_FILE=/abs/path/to/key.txt deploy/restore-test.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -11,7 +12,13 @@ work=$(mktemp -d)
 cleanup() { docker rm -f "$name" >/dev/null 2>&1 || true; rm -rf "$work"; }
 trap cleanup EXIT
 
-"${compose[@]}" run --rm --no-deps -T backup fetch-latest.sh > "$work/latest.dump"
+"${compose[@]}" run --rm --no-deps -T backup fetch-latest.sh > "$work/latest.bin"
+if head -c 20 "$work/latest.bin" | grep -q '^age-encryption.org'; then
+  : "${AGE_IDENTITY_FILE:?the latest backup is encrypted: set AGE_IDENTITY_FILE to the absolute path of your private age key}"
+  "${compose[@]}" run --rm --no-deps -T -v "$AGE_IDENTITY_FILE:/identity:ro" backup age -d -i /identity < "$work/latest.bin" > "$work/latest.dump"
+else
+  mv "$work/latest.bin" "$work/latest.dump" # backup made before encryption was enabled
+fi
 [ -s "$work/latest.dump" ] || { echo "downloaded dump is empty" >&2; exit 1; }
 
 docker run -d --name "$name" -e POSTGRES_PASSWORD=restore-test "$pg_image" >/dev/null

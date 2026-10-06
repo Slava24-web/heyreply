@@ -1,5 +1,6 @@
 {
   "name": "heyreply",
+  "license": "UNLICENSED",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel --filter web --filter api dev",

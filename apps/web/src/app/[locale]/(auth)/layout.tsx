@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server';
+import { LegalLinks } from '@/components/legal/legal-links';
 import { Logo } from '@/components/logo';
 import { LocaleSwitch, ThemeToggle } from '@/components/shell/prefs';
 import { Suspense } from 'react';
@@ -39,7 +40,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
                     {s.count}
                   </div>
                 </div>
-                <span className="w-12 text-right font-display text-sm tabular text-text">{s.value}%</span>
+                <span className="w-16 shrink-0 text-right font-display text-sm whitespace-nowrap tabular text-text">{s.value}%</span>
               </div>
             ))}
           </div>
@@ -58,6 +59,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-[400px] animate-fade-up">{children}</div>
         </div>
+        <LegalLinks className="justify-center" />
       </main>
     </div>
   );

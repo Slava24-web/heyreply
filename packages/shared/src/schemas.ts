@@ -22,6 +22,9 @@ export function isSafeHttpUrl(v: string | null | undefined): v is string {
 }
 const optionalName = z.string().trim().max(160).optional().nullable();
 
+/** Version of the legal documents (terms, privacy policy, consent). Bump it whenever their text changes materially. */
+export const LEGAL_VERSION = '2026-10-06';
+
 export const registerSchema = z.object({
   name: z.string().trim().min(1).max(80),
   email: z.string().trim().toLowerCase().email(),
@@ -32,8 +35,16 @@ export const registerSchema = z.object({
     .regex(/[A-Za-zА-Яа-я]/, 'password_letter')
     .regex(/\d/, 'password_digit'),
   locale: z.enum(LOCALES).optional(),
+  /** Terms of service + privacy policy accepted */
+  acceptTerms: z.literal(true),
+  /** Separate consent to personal data processing (152-FZ, GDPR art. 6(1)(a)) */
+  acceptPersonalData: z.literal(true),
 });
 export type RegisterInput = z.infer<typeof registerSchema>;
+
+/** Consent given by an existing account after the legal documents were introduced or changed */
+export const consentSchema = z.object({ acceptTerms: z.literal(true), acceptPersonalData: z.literal(true) });
+export type ConsentInput = z.infer<typeof consentSchema>;
 
 export const loginSchema = z.object({
   email: z.string().trim().toLowerCase().email(),

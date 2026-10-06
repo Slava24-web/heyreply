@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, Post, Req, Res } from '@nestjs/common';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { z } from 'zod';
 import { loginSchema, registerSchema, type LoginInput, type RegisterInput } from '@heyreply/shared';
@@ -50,9 +50,9 @@ export class AuthController {
     }
   }
 
-  // Logout only clears cookies/revokes; it must work even when a client has hit the auth rate limit
+  // Logout only clears cookies/revokes, so it gets a looser limit than login. It does a DB lookup per call, hence not unlimited.
   @Public()
-  @SkipThrottle()
+  @Throttle({ default: { ttl: 60_000, limit: 60 } })
   @HttpCode(200)
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowRight, Eye, EyeOff, MailCheck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
-import { useState } from 'react';
+import { forwardRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { loginSchema, registerSchema } from '@heyreply/shared';
@@ -36,6 +36,32 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </button>
     </div>
+  );
+}
+
+export const ConsentBox = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement> & { error?: boolean }>(({ id, error, children, ...props }, ref) => (
+  <div className="flex items-start gap-2.5">
+    <input
+      ref={ref}
+      id={id}
+      type="checkbox"
+      aria-invalid={error}
+      className="mt-0.5 size-4 shrink-0 cursor-pointer accent-primary aria-[invalid=true]:outline aria-[invalid=true]:outline-2 aria-[invalid=true]:outline-danger"
+      {...props}
+    />
+    <label htmlFor={id} className="cursor-pointer text-[13px] leading-snug text-muted">
+      {children}
+    </label>
+  </div>
+));
+ConsentBox.displayName = 'ConsentBox';
+
+/** Opens in a new tab so the half-filled form isn't lost. */
+export function LegalLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link href={href} target="_blank" className="font-medium text-primary hover:underline">
+      {children}
+    </Link>
   );
 }
 
@@ -137,6 +163,15 @@ export function RegisterForm({ locale }: { locale: string }) {
         >
           <PasswordInput id="password" autoComplete="new-password" aria-invalid={!!errors.password} {...form.register('password')} />
         </Field>
+        <div className="flex flex-col gap-2.5">
+          <ConsentBox id="acceptTerms" error={!!errors.acceptTerms} {...form.register('acceptTerms')}>
+            {t.rich('acceptTerms', { terms: (c) => <LegalLink href="/terms">{c}</LegalLink>, privacy: (c) => <LegalLink href="/privacy">{c}</LegalLink> })}
+          </ConsentBox>
+          <ConsentBox id="acceptPersonalData" error={!!errors.acceptPersonalData} {...form.register('acceptPersonalData')}>
+            {t.rich('acceptPersonalData', { consent: (c) => <LegalLink href="/consent">{c}</LegalLink> })}
+          </ConsentBox>
+          {errors.acceptTerms || errors.acceptPersonalData ? <p className="text-xs text-danger">{t('consentRequired')}</p> : null}
+        </div>
         <Button type="submit" size="lg" disabled={isSubmitting} className="mt-2">
           {t('register')} <ArrowRight />
         </Button>

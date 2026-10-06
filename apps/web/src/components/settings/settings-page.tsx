@@ -17,6 +17,7 @@ import { useFormat } from '@/lib/format';
 import { useMe, useUpdateMe } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { IntegrationsSection } from './integrations';
+import { LegalLinks } from '@/components/legal/legal-links';
 import { EmailImportSection } from './email-import';
 
 const SECTIONS = ['profile', 'preferences', 'integrations', 'security', 'sessions', 'data'] as const;
@@ -329,6 +330,7 @@ export function SettingsPage() {
               ) : null}
             </div>
           </Section>
+          <LegalLinks />
         </div>
       </div>
     </div>

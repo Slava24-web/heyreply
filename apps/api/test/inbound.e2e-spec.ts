@@ -75,7 +75,7 @@ describe('E-mail import (Cloudflare Email Worker webhook)', () => {
     app.use(cookieParser());
     await app.init();
     prisma = app.get(PrismaService);
-    jar = cookies(await http().post('/api/v1/auth/register').send({ name: 'Inbound', email, password }).expect(201));
+    jar = cookies(await http().post('/api/v1/auth/register').send({ name: 'Inbound', email, password, acceptTerms: true, acceptPersonalData: true }).expect(201));
     const r = await http().post('/api/v1/me/inbound').set('Cookie', jar).expect(201);
     address = r.body.address;
   });

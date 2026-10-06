@@ -1,4 +1,4 @@
-import type { UserDto } from '@heyreply/shared';
+import { LEGAL_VERSION, type UserDto } from '@heyreply/shared';
 import type { User } from '../generated/prisma/client';
 
 export function toUserDto(u: User): UserDto {
@@ -12,5 +12,6 @@ export function toUserDto(u: User): UserDto {
     defaultSalaryType: u.defaultSalaryType,
     ghostingDays: u.ghostingDays,
     createdAt: u.createdAt.toISOString(),
+    legalAccepted: u.termsVersion === LEGAL_VERSION,
   };
 }

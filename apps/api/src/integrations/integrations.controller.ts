@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { Throttle } from '@nestjs/throttler';
 import { createTokenSchema, importBatchSchema, type ImportBatch } from '@heyreply/shared';
 import { z } from 'zod';
 import { CurrentUser, Public, type AuthUser } from '../common/decorators';
@@ -42,8 +42,8 @@ export class ImportController {
     private readonly prisma: PrismaService,
   ) {}
 
-  /** Lets the extension verify its token and show whose account it is connected to. */
-  @SkipThrottle()
+  /** Lets the extension verify its token and show whose account it is connected to. Public + token lookup in the DB, so it is throttled too. */
+  @Throttle({ default: { ttl: 60_000, limit: 120 } })
   @Get('ping')
   async ping(@CurrentUser() u: AuthUser) {
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: u.id }, select: { name: true, email: true, locale: true } });

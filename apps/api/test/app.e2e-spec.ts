@@ -3,6 +3,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
+import { LEGAL_VERSION, registerSchema } from '@heyreply/shared';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { originGuard } from '../src/common/origin.middleware';
@@ -33,9 +34,9 @@ describe('heyreply API (e2e)', () => {
     await app.init();
     prisma = app.get(PrismaService);
 
-    const a = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'A', email: emailA, password }).expect(201);
+    const a = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'A', email: emailA, password, acceptTerms: true, acceptPersonalData: true }).expect(201);
     jarA = cookies(a);
-    const b = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'B', email: emailB, password }).expect(201);
+    const b = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: 'B', email: emailB, password, acceptTerms: true, acceptPersonalData: true }).expect(201);
     jarB = cookies(b);
   });
 
@@ -44,12 +45,24 @@ describe('heyreply API (e2e)', () => {
     await app.close();
   });
 
+  it('requires consent to register', () => {
+    // Register is throttled to 10/min, so rejections are checked against the schema the endpoint validates with
+    const base = { name: 'C', email: 'c@heyreply.test', password };
+    expect(registerSchema.safeParse(base).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, acceptTerms: true }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, acceptTerms: true, acceptPersonalData: false }).success).toBe(false);
+    expect(registerSchema.safeParse({ ...base, acceptTerms: true, acceptPersonalData: true }).success).toBe(true);
+  });
+
   it('seeds preset sources in the registration language', async () => {
     const http = request(app.getHttpServer());
     const email = `e2e-en-${stamp}@heyreply.test`;
     try {
-      const r = await http.post('/api/v1/auth/register').send({ name: 'En', email, password, locale: 'en' }).expect(201);
+      const r = await http.post('/api/v1/auth/register').send({ name: 'En', email, password, locale: 'en', acceptTerms: true, acceptPersonalData: true }).expect(201);
       expect(r.body.user.locale).toBe('en');
+      const stored = await prisma.user.findUniqueOrThrow({ where: { email } });
+      expect(stored.termsAcceptedAt).toBeInstanceOf(Date);
+      expect(stored.termsVersion).toBe(LEGAL_VERSION);
       const jar = cookies(r);
       const names = (await http.get('/api/v1/dictionaries/sources').set('Cookie', jar).expect(200)).body.map((s: { name: string }) => s.name);
       expect(names).toEqual(expect.arrayContaining(['Company website', 'Referral', 'Habr Career']));
@@ -146,7 +159,7 @@ describe('heyreply API (e2e)', () => {
   describe('security', () => {
     async function freshUser(tag: string) {
       const email = `e2e-${tag}-${stamp}@heyreply.test`;
-      const r = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: tag, email, password }).expect(201);
+      const r = await request(app.getHttpServer()).post('/api/v1/auth/register').send({ name: tag, email, password, acceptTerms: true, acceptPersonalData: true }).expect(201);
       return { email, jar: cookies(r) };
     }
     afterAll(() => prisma.user.deleteMany({ where: { email: { contains: `-${stamp}@heyreply.test` } } }));
@@ -235,6 +248,13 @@ describe('heyreply API (e2e)', () => {
       expect(r.status).toBe(400);
       expect(JSON.stringify(r.body)).not.toMatch(/at \w+ \(|prisma|node_modules/i);
     });
+
+    it('answers an oversized body with 413, not a 500', async () => {
+      const r = await request(app.getHttpServer()).post('/api/v1/auth/login').send({ email: 'a@b.co', password: 'x'.repeat(150_000) });
+      expect(r.status).toBe(413);
+      expect(r.body).toMatchObject({ code: 'PAYLOAD_TOO_LARGE' });
+      expect(JSON.stringify(r.body)).not.toMatch(/at \w+ \(|node_modules/i);
+    });
   });
 
   describe('browser extension import', () => {
@@ -248,7 +268,7 @@ describe('heyreply API (e2e)', () => {
     afterAll(() => prisma.user.deleteMany({ where: { email: emailB } }));
 
     beforeAll(async () => {
-      jarB = cookies(await http().post('/api/v1/auth/register').send({ name: 'Importer', email: emailB, password }).expect(201));
+      jarB = cookies(await http().post('/api/v1/auth/register').send({ name: 'Importer', email: emailB, password, acceptTerms: true, acceptPersonalData: true }).expect(201));
       const r = await http().post('/api/v1/me/tokens').set('Cookie', jarB).send({ name: 'Chrome' }).expect(201);
       token = r.body.token;
       expect(token).toMatch(/^otk_/);
@@ -306,7 +326,7 @@ describe('heyreply API (e2e)', () => {
       expect(bad.status).toBe(400);
       expect((await imp([{ platform: 'myspace', externalId: '1', companyName: 'X', positionName: 'Y' }])).status).toBe(400);
       const otherEmail = `e2e-other-${stamp}@heyreply.test`;
-      const other = cookies(await http().post('/api/v1/auth/register').send({ name: 'Other', email: otherEmail, password }).expect(201));
+      const other = cookies(await http().post('/api/v1/auth/register').send({ name: 'Other', email: otherEmail, password, acceptTerms: true, acceptPersonalData: true }).expect(201));
       const seen = await http().get('/api/v1/applications?q=Спортдата').set('Cookie', other).expect(200);
       expect(seen.body.total).toBe(0);
       await prisma.user.deleteMany({ where: { email: otherEmail } });
@@ -316,6 +336,29 @@ describe('heyreply API (e2e)', () => {
       const id = (await http().get('/api/v1/me/tokens').set('Cookie', jarB)).body[0].id;
       await http().delete(`/api/v1/me/tokens/${id}`).set('Cookie', jarB).expect(200);
       await http().get('/api/v1/import/ping').set('Authorization', `Bearer ${token}`).expect(401);
+    });
+  });
+
+  // Last on purpose: these exhaust per-route budgets for the shared test IP
+  describe('rate limits on unauthenticated endpoints', () => {
+    const hammer = async (send: () => request.Test, n: number) => {
+      const codes: number[] = [];
+      for (let i = 0; i < n; i++) codes.push((await send()).status);
+      return codes;
+    };
+
+    it('throttles /import/ping with garbage tokens (each call is a DB lookup)', async () => {
+      const codes = await hammer(() => request(app.getHttpServer()).get('/api/v1/import/ping').set('Authorization', 'Bearer otk_garbage'), 125);
+      expect(new Set(codes)).toEqual(new Set([401, 429]));
+      expect(codes.indexOf(429)).toBeLessThanOrEqual(120);
+      expect(codes.slice(codes.indexOf(429)).every((c) => c === 429)).toBe(true);
+    });
+
+    it('throttles /auth/logout with random refresh cookies', async () => {
+      const codes = await hammer(() => request(app.getHttpServer()).post('/api/v1/auth/logout').set('Cookie', `refresh_token=${crypto.randomUUID()}.x`), 65);
+      expect(new Set(codes)).toEqual(new Set([200, 429]));
+      expect(codes.indexOf(429)).toBeLessThanOrEqual(60);
+      expect(codes.slice(codes.indexOf(429)).every((c) => c === 429)).toBe(true);
     });
   });
 });

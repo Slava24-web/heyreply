@@ -20,6 +20,8 @@ await rm(out, { recursive: true, force: true });
 await mkdir(`${out}/icons`, { recursive: true });
 for (const size of [16, 32, 48, 128]) await sharp(Buffer.from(ICON(size))).png().toFile(`${out}/icons/${size}.png`);
 const manifest = JSON.parse(await (await import('node:fs/promises')).readFile('src/manifest.json', 'utf8'));
+// Release builds point the store listing at the production site: HEYREPLY_SITE_URL=https://heyreply.app pnpm ext:zip
+if (process.env.HEYREPLY_SITE_URL) manifest.homepage_url = new URL(process.env.HEYREPLY_SITE_URL).origin;
 if (e2e) manifest.host_permissions = ['http://localhost/*'];
 await writeFile(`${out}/manifest.json`, JSON.stringify(manifest, null, 2));
 await cp('src/popup/popup.html', `${out}/popup.html`);

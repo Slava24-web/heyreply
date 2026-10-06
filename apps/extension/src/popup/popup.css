@@ -55,3 +55,7 @@ li .r.error { color: var(--danger); }
 .platforms { max-height: 230px; overflow: auto; padding-bottom: 4px; }
 .platforms .group { flex-basis: 100%; margin: 6px 0 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 .platforms .group:first-child { margin-top: 0; }
+
+footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border, #e6dfe9); }
+footer a { color: var(--primary); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
