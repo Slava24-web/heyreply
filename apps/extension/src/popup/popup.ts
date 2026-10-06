@@ -21,12 +21,23 @@ async function ping(s: Settings) {
   return (await res.json()) as { user: { name: string; email: string } };
 }
 
+/** The policy is served by the heyreply instance the extension talks to, in the user's language. */
+const setPrivacyLink = (serverUrl: string) => {
+  try {
+    $<HTMLAnchorElement>('privacy').href = `${new URL(serverUrl).origin}/${lang}/privacy`;
+  } catch {
+    $<HTMLAnchorElement>('privacy').removeAttribute('href');
+  }
+};
+$('server').addEventListener('input', () => setPrivacyLink(($('server') as HTMLInputElement).value.trim()));
+
 async function render() {
   const settings = await getSettings();
   const state = await getState();
   const conn = $('conn');
   $('server').setAttribute('value', settings.serverUrl);
   ($('server') as HTMLInputElement).value = settings.serverUrl;
+  setPrivacyLink(settings.serverUrl);
 
   if (!settings.token) {
     $('connect').hidden = false;

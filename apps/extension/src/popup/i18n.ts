@@ -29,6 +29,10 @@ const ru = {
   e_NETWORK: 'Сервер недоступен — отклики сохранены и будут отправлены позже.',
   e_PERMISSION: 'Нужно разрешение на доступ к адресу сервера.',
   e_URL: 'Некорректный адрес.',
+  disclosure:
+    'Расширение читает только страницы перечисленных площадок: название вакансии, компанию, ссылку, место, зарплату и статус отклика. Эти данные отправляются только на указанный выше сервер heyreply.',
+  privacy: 'Политика конфиденциальности',
+  notAffiliated: 'Не связано с площадками и не одобрено ими.',
 };
 const en: typeof ru = {
   connectHint: 'Create a token in heyreply → Settings → Integrations and paste it here.',
@@ -61,6 +65,10 @@ const en: typeof ru = {
   e_NETWORK: 'Server unreachable — applications are kept and will be sent later.',
   e_PERMISSION: 'Permission to reach the server address is required.',
   e_URL: 'Invalid address.',
+  disclosure:
+    'The extension only reads the listed job sites: job title, company, link, location, salary and application status. This data is sent only to the heyreply server entered above.',
+  privacy: 'Privacy Policy',
+  notAffiliated: 'Not affiliated with or endorsed by the job boards.',
 };
 export type Key = keyof typeof ru;
 export const lang = navigator.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
