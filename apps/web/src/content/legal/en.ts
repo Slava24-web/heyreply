@@ -1,6 +1,6 @@
 import type { LegalDoc, LegalDocKey, Operator } from '@/lib/legal';
 
-const who = (o: Operator) => `${o.name}, ${o.address} (the “Operator”, “we”)`;
+const who = (o: Operator) => `${o.name} (the “Operator”, “we”)`;
 
 export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
   privacy: (o) => ({
@@ -123,6 +123,8 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         paragraphs: [
           `These terms are an agreement between ${who(o)} and you as a user of heyreply: a web app for tracking job applications, a browser extension and e-mail import (the “Service”). By registering you accept these terms and the Privacy Policy.`,
           'The Service is free: no subscriptions, no ads, no paid features. The author may accept voluntary donations through a third-party service. A donation is not a payment for the Service, gives the user nothing in the Service, creates no obligation as to availability or quality, and is non-refundable.',
+          'The project is non-commercial: it was created for personal purposes and is maintained on a voluntary basis. The Operator does not pursue any profit.',
+          'The Service is provided free of charge, “as is”, and is not a service (paid or otherwise) rendered to the user. You are therefore solely responsible for all data you provide and enter into the Service and for the consequences of entering and using it.',
         ],
       },
       {
@@ -143,7 +145,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         title: '4. Your data and rights in it',
         paragraphs: [
           'The data you put into the Service belongs to you. You grant us the right to store and process it solely to run the Service, as described in the Privacy Policy. You can export your data and delete your account at any time.',
-          'You confirm that you enter data lawfully and do not infringe anyone’s rights. Do not enter other people’s data, or information not needed for tracking applications (passport data, health information and the like), without need.',
+          'You are solely responsible for the content, accuracy and lawfulness of all data you enter into the Service or send through the extension and e-mail import. You confirm that you enter data lawfully and do not infringe anyone’s rights. Do not enter other people’s data, or information not needed for tracking applications (passport data, health information and the like), without need.',
         ],
       },
       {
@@ -165,13 +167,13 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
       {
         title: '7. Availability and no warranty',
         paragraphs: [
-          'The Service is provided “as is”. We aim to keep it running and take backups, but we do not guarantee uninterrupted or error-free operation. We may change features, restrict access during maintenance and discontinue the Service, giving you notice where possible. Keep important data yourself too: use the export.',
+          'The Service is provided “as is”. We aim to keep it running and take backups, but we do not guarantee uninterrupted or error-free operation. We may change features, restrict access during maintenance and discontinue the Service, giving you notice where possible. The Service is free and is not meant to be the only copy of important data: keep your own copy and use the export. We do not guarantee that e-mail import or the extension will recognise every job or message correctly, and you are responsible for checking the data entered.',
         ],
       },
       {
         title: '8. Liability',
         paragraphs: [
-          'To the extent permitted by law we are not liable for lost profit, lost job opportunities, indirect loss, or damage caused by your actions, by failures of third-party providers or by events beyond our control. Our total liability to you is limited to the amount you paid for the Service in the last 12 months; while the Service is free, to the minimum amount the law allows. This does not limit liability that cannot be limited by law, including consumer rights.',
+          'To the extent permitted by law we are not liable for loss or corruption of data, job-search outcomes, the accuracy of automatically recognised data, lost profit, lost job opportunities, indirect loss, or damage caused by your actions, by failures of third-party providers or by events beyond our control. Our total liability to you is limited to the amount you paid for the Service in the last 12 months; while the Service is free, to the minimum amount the law allows. This does not limit liability that cannot be limited by law, including consumer rights.',
         ],
       },
       {
@@ -190,7 +192,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
           `These terms are governed by the law of the Republic of Serbia, unless mandatory rules of the country where you live as a consumer provide otherwise. We try to settle disputes by negotiation; send claims to ${o.email}. If that fails, the dispute is heard by the competent court of the Republic of Serbia, unless mandatory rules of your country provide otherwise.`,
         ],
       },
-      { title: '12. Contact', paragraphs: [`${o.name}, ${o.address}. E-mail: ${o.email}.`] },
+      { title: '12. Contact', paragraphs: [`${o.name}. E-mail: ${o.email}.`] },
     ],
   }),
 

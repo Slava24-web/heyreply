@@ -50,7 +50,7 @@ git clone https://github.com/Slava24-web/heyreply.git && cd heyreply
 cp .env.example .env && chmod 600 .env
 ```
 
-Заполните в `.env`: `POSTGRES_PASSWORD`, `JWT_ACCESS_SECRET` (`openssl rand -base64 48`), `SITE_ADDRESS`, `WEB_ORIGIN`, `BACKUP_S3_*`, реквизиты оператора `LEGAL_OPERATOR_NAME`, `LEGAL_OPERATOR_ADDRESS`, `LEGAL_CONTACT_EMAIL`, `LEGAL_HOSTING` (они подставляются в политику конфиденциальности, соглашение и согласие, без них веб не стартует); для импорта почты ещё `INBOUND_*`; для сброса пароля `SMTP_URL` и `MAIL_FROM` (раздел 5); по желанию `DONATE_URL`. Строки раздела «Production only» в `.env.example` закомментированы — раскомментируйте нужные. `IMAGE_TAG` запишет `deploy/deploy.sh`.
+Заполните в `.env`: `POSTGRES_PASSWORD`, `JWT_ACCESS_SECRET` (`openssl rand -base64 48`), `SITE_ADDRESS`, `WEB_ORIGIN`, `BACKUP_S3_*`, реквизиты оператора `LEGAL_OPERATOR_NAME`, `LEGAL_CONTACT_EMAIL`, `LEGAL_HOSTING` (они подставляются в политику конфиденциальности, соглашение и согласие, без них веб не стартует); для импорта почты ещё `INBOUND_*`; для сброса пароля `SMTP_URL` и `MAIL_FROM` (раздел 5); по желанию `DONATE_URL`. Строки раздела «Production only» в `.env.example` закомментированы — раскомментируйте нужные. `IMAGE_TAG` запишет `deploy/deploy.sh`.
 
 ### Доступ к GHCR
 
