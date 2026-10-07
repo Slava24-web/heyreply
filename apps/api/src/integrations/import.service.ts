@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import {
   cleanCompanyName,
+  detectSourceByUrl,
   normalizeName,
   platformSourceName,
   STATUS_STAGE,
   type AppStatus,
   type ImportItem,
   type ImportResultDto,
+  type ImportOutcome,
+  type ManualImport,
 } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
@@ -17,6 +20,23 @@ import type { Prisma } from '../generated/prisma/client';
 const FINAL: AppStatus[] = ['OFFER', 'ACCEPTED', 'REJECTED', 'DECLINED'];
 /** A manually created application this recent with the same company + position is the same one. */
 const LINK_WINDOW_MS = 60 * 86_400_000;
+/** `externalSource` of applications added by hand from the extension on a site it has no adapter for. */
+export const WEB_SOURCE = 'web';
+
+type UserPrefs = { locale: string; defaultCurrency: string; defaultSalaryType: 'GROSS' | 'NET' };
+/** An import item whose source is either a known board or the open web (manual add). */
+type Item = Omit<ImportItem, 'platform' | 'origin'> & { platform: string };
+type Source = { label: string | null; note: string };
+
+/**
+ * Stable id of a vacancy page without a board adapter: host + path, without query, hash and trailing slash
+ * (tracking parameters differ between visits of the same page). Long URLs keep their tail, which is the specific part.
+ */
+export function webVacancyId(url: string): string {
+  const u = new URL(url);
+  const id = `${u.hostname.replace(/^www\./, '')}${u.pathname.replace(/\/+$/, '')}`.toLowerCase();
+  return id.length > 120 ? id.slice(-120) : id;
+}
 
 /**
  * Whether a status seen on the job board should replace ours. Boards only move forward
@@ -40,11 +60,13 @@ export class ImportService {
 
   async importBatch(userId: string, rawItems: ImportItem[]): Promise<ImportResultDto> {
     const items = rawItems.map((i) => ({ ...i, companyName: cleanCompanyName(i.companyName) }));
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { locale: true, defaultCurrency: true, defaultSalaryType: true } });
+    const user = await this.prefs(userId);
     const result: ImportResultDto = { items: [], created: 0, updated: 0, unchanged: 0, linked: 0, errors: [] };
     for (const [index, item] of items.entries()) {
       try {
-        const outcome = await this.prisma.$transaction((tx) => this.importOne(tx, userId, user, item));
+        const label = platformSourceName(item.platform, user.locale);
+        const source = { label, note: user.locale === 'en' ? `Imported from ${label}` : `Импорт: ${label}` };
+        const outcome = await this.prisma.$transaction((tx) => this.importOne(tx, userId, user, item, source));
         result[outcome]++;
         result.items.push(outcome);
       } catch (e) {
@@ -55,19 +77,33 @@ export class ImportService {
     return result;
   }
 
-  private async importOne(
-    tx: Prisma.TransactionClient,
-    userId: string,
-    user: { locale: string; defaultCurrency: string; defaultSalaryType: 'GROSS' | 'NET' },
-    item: ImportItem,
-  ): Promise<'created' | 'updated' | 'unchanged' | 'linked'> {
-    const sourceLabel = platformSourceName(item.platform, user.locale);
-    const note = user.locale === 'en' ? `Imported from ${sourceLabel}` : `Импорт: ${sourceLabel}`;
-    const now = new Date();
+  /**
+   * Manual add from the extension popup on a page it can't parse on its own. With a vacancy link the page itself is the
+   * id (adding it again changes nothing); without one it is a plain manual application, like one added in the web app.
+   */
+  async importManual(userId: string, raw: ManualImport): Promise<{ outcome: ImportOutcome }> {
+    const user = await this.prefs(userId);
+    const url = raw.vacancyUrl || null;
+    const company = user.locale === 'en' ? 'Company website' : 'Сайт компании';
+    const source = { label: url ? (detectSourceByUrl(url, user.locale) ?? company) : null, note: user.locale === 'en' ? 'Added from the browser extension' : 'Добавлено из расширения' };
+    const item: Item = { ...raw, companyName: cleanCompanyName(raw.companyName), platform: WEB_SOURCE, externalId: url ? webVacancyId(url) : '', vacancyUrl: url };
+    const outcome = await this.prisma.$transaction((tx) => this.importOne(tx, userId, user, item, source));
+    return { outcome };
+  }
 
-    let existing = await tx.application.findUnique({
-      where: { userId_externalSource_externalId: { userId, externalSource: item.platform, externalId: item.externalId } },
-    });
+  private prefs(userId: string): Promise<UserPrefs> {
+    return this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { locale: true, defaultCurrency: true, defaultSalaryType: true } });
+  }
+
+  private async importOne(tx: Prisma.TransactionClient, userId: string, user: UserPrefs, item: Item, source: Source): Promise<'created' | 'updated' | 'unchanged' | 'linked'> {
+    const { label: sourceLabel, note } = source;
+    const now = new Date();
+    // A manual add without a link has no identity on the web: it is stored like an application typed in the web app
+    const externalId = item.externalId || null;
+
+    let existing = externalId
+      ? await tx.application.findUnique({ where: { userId_externalSource_externalId: { userId, externalSource: item.platform, externalId } } })
+      : null;
     let linked = false;
 
     if (!existing) {
@@ -90,14 +126,14 @@ export class ImportService {
       if (existing) {
         linked = true;
         // Replace a missing or legacy derived id with the real one
-        const upgradeId = !existing.externalId || existing.externalId.startsWith('mail-');
+        const upgradeId = externalId && (!existing.externalId || existing.externalId.startsWith('mail-'));
         await tx.application.update({
           where: { id: existing.id },
           data: {
-            ...(upgradeId ? { externalSource: item.platform, externalId: item.externalId } : {}),
+            ...(upgradeId ? { externalSource: item.platform, externalId } : {}),
             importedAt: now,
             vacancyUrl: existing.vacancyUrl ?? item.vacancyUrl ?? null,
-            sourceId: existing.sourceId ?? (await this.dict.resolve(tx, userId, 'sources', sourceLabel)),
+            sourceId: existing.sourceId ?? (sourceLabel ? await this.dict.resolve(tx, userId, 'sources', sourceLabel) : null),
           },
         });
       }
@@ -118,9 +154,9 @@ export class ImportService {
     }
 
     // Purged after the user deleted it: the retention job keeps only the vacancy id for this check
-    const purged = await tx.deletedImport.findUnique({
-      where: { userId_externalSource_externalId: { userId, externalSource: item.platform, externalId: item.externalId } },
-    });
+    const purged = externalId
+      ? await tx.deletedImport.findUnique({ where: { userId_externalSource_externalId: { userId, externalSource: item.platform, externalId } } })
+      : null;
     if (purged) return 'unchanged';
 
     // New application
@@ -140,7 +176,7 @@ export class ImportService {
         userId,
         companyId: await this.dict.resolve(tx, userId, 'companies', item.companyName),
         positionId: await this.dict.resolve(tx, userId, 'positions', item.positionName),
-        sourceId: await this.dict.resolve(tx, userId, 'sources', sourceLabel),
+        sourceId: sourceLabel ? await this.dict.resolve(tx, userId, 'sources', sourceLabel) : null,
         locationId: item.locationName ? await this.dict.resolve(tx, userId, 'locations', item.locationName) : null,
         workFormat: item.workFormat ?? null,
         vacancyUrl: item.vacancyUrl ?? null,
@@ -149,8 +185,8 @@ export class ImportService {
         currency: hasSalary ? (item.currency ?? user.defaultCurrency) : null,
         salaryType: hasSalary ? user.defaultSalaryType : null,
         appliedAt,
-        externalSource: item.platform,
-        externalId: item.externalId,
+        externalSource: externalId ? item.platform : null,
+        externalId,
         importedAt: now,
         ...state,
         statusHistory: { create: history },

@@ -33,6 +33,16 @@ export const ACTIVE_STATUSES: AppStatus[] = ['APPLIED', 'VIEWED', 'SCREENING', '
 export const WAITING_STATUSES: AppStatus[] = ['APPLIED', 'VIEWED'];
 
 export const WORK_FORMATS = ['OFFICE', 'HYBRID', 'REMOTE'] as const;
+
+/** Display names for files a person opens in a spreadsheet (the app itself takes these from its message catalogs). */
+export const STATUS_LABELS: Record<'ru' | 'en', Record<string, string>> = {
+  ru: { APPLIED: 'Отправлен', VIEWED: 'Просмотрен', SCREENING: 'Скрининг с HR', TEST_TASK: 'Тестовое', INTERVIEW: 'Интервью', FINAL_INTERVIEW: 'Финальное интервью', OFFER: 'Оффер', ACCEPTED: 'Оффер принят', REJECTED: 'Отказ', DECLINED: 'Я отказался', NO_RESPONSE: 'Нет ответа' },
+  en: { APPLIED: 'Applied', VIEWED: 'Viewed', SCREENING: 'HR screening', TEST_TASK: 'Test task', INTERVIEW: 'Interview', FINAL_INTERVIEW: 'Final interview', OFFER: 'Offer', ACCEPTED: 'Offer accepted', REJECTED: 'Rejected', DECLINED: 'Declined by me', NO_RESPONSE: 'No response' },
+};
+export const FORMAT_LABELS: Record<'ru' | 'en', Record<string, string>> = {
+  ru: { OFFICE: 'Офис', HYBRID: 'Гибрид', REMOTE: 'Удалённо' },
+  en: { OFFICE: 'Office', HYBRID: 'Hybrid', REMOTE: 'Remote' },
+};
 export type WorkFormat = (typeof WORK_FORMATS)[number];
 
 export const SALARY_TYPES = ['GROSS', 'NET'] as const;
@@ -50,6 +60,7 @@ export type DictionaryType = (typeof DICTIONARY_TYPES)[number];
 export const REJECTION_REASONS = ['EXPERIENCE', 'SALARY', 'CLOSED', 'NO_REASON', 'OTHER'] as const;
 
 export const CURRENCIES = ['RUB', 'USD', 'EUR', 'KZT', 'GEL', 'AMD', 'RSD'] as const;
+export type Currency = (typeof CURRENCIES)[number];
 
 /** System sources with localized names and domains for auto-detection from a vacancy URL. */
 /** Job boards and ATS the extension understands (also used as `Application.externalSource`). */

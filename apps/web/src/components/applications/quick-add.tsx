@@ -10,6 +10,7 @@ import {
   type ApplicationDto,
   type AppStatus,
   type CreateApplicationInput,
+  type Currency,
   type SalaryType,
   type WorkFormat,
 } from '@heyreply/shared';
@@ -235,6 +236,10 @@ export function QuickAddSheet() {
     if (detected && (!form.sourceName || form.sourceName === autoSource)) {
       set('sourceName', detected);
       setAutoSource(detected);
+    } else if (!detected && autoSource && form.sourceName === autoSource) {
+      // The link that produced this source is gone (or no longer a known board): take back what we filled in
+      set('sourceName', '');
+      setAutoSource(null);
     }
   };
 
@@ -263,7 +268,7 @@ export function QuickAddSheet() {
         workFormat: form.workFormat,
         salaryFrom: form.salaryFrom ? Number(form.salaryFrom) : null,
         salaryTo: form.salaryTo ? Number(form.salaryTo) : null,
-        currency: form.salaryFrom || form.salaryTo ? form.currency : null,
+        currency: form.salaryFrom || form.salaryTo ? (form.currency as Currency) : null,
         salaryType: form.salaryFrom || form.salaryTo ? form.salaryType : null,
         appliedAt: form.date === today() ? undefined : new Date(`${form.date}T12:00:00`),
         status: form.status,

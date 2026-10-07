@@ -136,7 +136,7 @@ export function useRestoreApplication() {
 export function useBulk() {
   const inv = useInvalidateAll();
   return useMutation({
-    mutationFn: (body: { ids: string[]; action: 'status' | 'delete' | 'archive' | 'tag'; status?: AppStatus; tagName?: string }) =>
+    mutationFn: (body: { ids: string[]; action: 'status' | 'delete' | 'archive' | 'tag' | 'restore'; status?: AppStatus; tagName?: string }) =>
       api<{ affected: number }>('/applications/bulk', { method: 'POST', body }),
     onSuccess: inv,
   });

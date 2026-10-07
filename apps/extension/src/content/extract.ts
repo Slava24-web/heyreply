@@ -1,6 +1,7 @@
 import type { WorkFormat } from '@heyreply/shared';
 import { cleanCompanyName } from '@heyreply/shared/dist/enums';
 import type { Adapter, VacancyData } from '../types';
+import { appliedDateFromText } from './dates';
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
 
@@ -125,7 +126,8 @@ function titleRegion(doc: Document): Element | null {
   return el;
 }
 
-export function isApplied(doc: Document, adapter: Adapter): boolean {
+/** Text of the region that carries the "you have applied" marker, with the vacancy title cut out; null when none does. */
+export function appliedText(doc: Document, adapter: Adapter): string | null {
   const scoped = adapter.appliedScope?.flatMap((sel) => [...doc.querySelectorAll(sel)]) ?? [];
   // Short pages without a title block are confirmation screens ("…/thanks"): read them whole
   const body = doc.body && (doc.body.textContent?.length ?? 0) < 3000 ? doc.body : null;
@@ -134,9 +136,21 @@ export function isApplied(doc: Document, adapter: Adapter): boolean {
   const regions = [...(scoped.length ? scoped : [titleRegion(doc) ?? body].filter((x): x is Element => !!x)), ...notices];
   // The vacancy title itself is excluded: "Applied Scientist" must not read as an "Applied" badge
   const titles = [doc.querySelector('h1')?.textContent, ...adapter.titleSelectors.map((s) => doc.querySelector(s)?.textContent)].map(clean).filter((t) => t.length > 2);
-  return regions.some((el) => {
+  for (const el of regions) {
     let text = clean(el.textContent);
     for (const t of titles) text = text.split(t).join(' ');
-    return adapter.appliedMarker.test(text);
-  });
+    if (adapter.appliedMarker.test(text)) return text;
+  }
+  return null;
+}
+
+export const isApplied = (doc: Document, adapter: Adapter) => appliedText(doc, adapter) !== null;
+
+/**
+ * When the vacancy page says the user applied ("Applied 3 weeks ago", "Вы откликнулись 12 октября"), that date.
+ * A vacancy opened again long after applying would otherwise be recorded as applied today.
+ */
+export function appliedAtOnPage(doc: Document, adapter: Adapter, now = new Date()): string | null {
+  const text = appliedText(doc, adapter);
+  return text ? appliedDateFromText(text, now) : null;
 }

@@ -80,8 +80,10 @@ export class AuthController {
   @Public()
   @HttpCode(200)
   @Post('reset-password')
-  async reset(@Body(new ZodPipe(resetSchema)) body: z.infer<typeof resetSchema>) {
+  async reset(@Body(new ZodPipe(resetSchema)) body: z.infer<typeof resetSchema>, @Res({ passthrough: true }) res: Response) {
     await this.auth.resetPassword(body.token, body.password);
+    // Every session was just revoked: drop this browser's cookies too, so the sign-in page does not bounce back into the app
+    clearAuthCookies(res);
     return { ok: true };
   }
 }

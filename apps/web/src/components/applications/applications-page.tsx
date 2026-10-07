@@ -50,7 +50,13 @@ function BulkBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
   const [tag, setTag] = useState('');
   const run = async (body: Parameters<typeof bulk.mutateAsync>[0]) => {
     const r = await bulk.mutateAsync(body);
-    toast.success(t('bulkDone', { count: r.affected }));
+    if (body.action === 'delete') {
+      // The bar unmounts with the selection, so the undo must not depend on this component's state
+      toast.success(t('bulkDeleted', { count: r.affected }), {
+        duration: 8000,
+        action: { label: tc('restore'), onClick: () => void bulk.mutateAsync({ ids: body.ids, action: 'restore' }).catch(() => toast.error(t('bulkRestoreFailed'))) },
+      });
+    } else toast.success(t('bulkDone', { count: r.affected }));
     onClear();
   };
   return (
@@ -107,6 +113,7 @@ function BulkBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
 
 export function ApplicationsPage() {
   const t = useTranslations('list');
+  const tc = useTranslations('common');
   const { filters, update, apiParams, activeCount, page, setPage } = useListParams();
   // Phones start with the feed; a saved choice always wins
   const [view, setView] = useStoredState<View>('heyreply.view', 'table', { clientDefault: () => (window.innerWidth < 768 ? 'feed' : 'table') });
@@ -182,7 +189,7 @@ export function ApplicationsPage() {
               { value: 'kanban', label: <span className="hidden sm:inline">{t('kanban')}</span>, icon: <Kanban /> },
               { value: 'feed', label: <span className="hidden sm:inline">{t('feed')}</span>, icon: <LayoutList /> },
             ]}
-            ariaLabel="View"
+            ariaLabel={t('view')}
           />
           <Menu>
             <MenuTrigger asChild>
@@ -216,7 +223,7 @@ export function ApplicationsPage() {
           </Menu>
           <Menu>
             <MenuTrigger asChild>
-              <Button variant="outline" size="icon" aria-label="Export">
+              <Button variant="outline" size="icon" aria-label={tc('export')}>
                 <Download />
               </Button>
             </MenuTrigger>

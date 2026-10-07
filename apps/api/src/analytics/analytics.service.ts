@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { WAITING_STATUSES, type AnalyticsQuery, type SummaryDto } from '@heyreply/shared';
+import { normalizeName, WAITING_STATUSES, type AnalyticsQuery, type SummaryDto } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { applicationInclude, toApplicationDto } from '../applications/applications.mapper';
 import * as m from './metrics';
@@ -73,7 +73,7 @@ export class AnalyticsService {
 
   async byPosition(userId: string, q: AnalyticsQuery) {
     return m.segment(await this.rows(userId, q.from, q.to), (r) =>
-      r.position.groupName ? { key: 'g:' + r.position.groupName, label: r.position.groupName } : { key: r.position.id, label: r.position.name },
+      r.position.groupName ? { key: 'g:' + normalizeName(r.position.groupName), label: r.position.groupName } : { key: r.position.id, label: r.position.name },
     );
   }
 

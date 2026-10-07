@@ -35,7 +35,7 @@ const call = async (path, init = {}) => {
   if (set.length) cookie = set.map((c) => c.split(';')[0]).join('; ');
   return { status: res.status, body: await res.json().catch(() => null) };
 };
-await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Ext E2E', email, password, acceptTerms: true, acceptPersonalData: true }) });
+await call('/auth/register', { method: 'POST', body: JSON.stringify({ name: 'Ext E2E', email, password, locale: 'ru', acceptTerms: true, acceptPersonalData: true }) });
 const { body: tok } = await call('/me/tokens', { method: 'POST', body: JSON.stringify({ name: 'e2e' }) });
 log('user + token created');
 
@@ -62,6 +62,17 @@ try {
     }
     return null;
   };
+
+  // 0. hh.ru background sync: while the user is anywhere on hh, "Мои отклики" is read without opening it
+  //    (an application made in the hh mobile app shows up)
+  await serve('https://hh.ru/applicant/negotiations*', `<!doctype html><html><head><meta charset="utf-8"></head><body><main>
+    <div class="row"><a href="https://hh.ru/vacancy/990000050">Android Developer</a><div data-qa="negotiations-item-company">Mobile Only LLC</div><span data-qa="negotiations-item-state">Просмотрен</span><span>Вы откликнулись 2 октября</span></div>
+    </main></body></html>`);
+  await serve('https://hh.ru/', `<!doctype html><html><head><meta charset="utf-8"></head><body><h1>Работа найдётся для каждого</h1></body></html>`);
+  await page.goto('https://hh.ru/');
+  const bg = await waitFor(async () => (await listApps('Mobile Only')).items?.[0], 10000);
+  check(bg?.status === 'VIEWED' && bg?.externalSource === 'hh', 'hh background sync: application from "Мои отклики" imported without opening the page');
+  check(bg?.appliedAt?.slice(5, 10) === '10-02', `hh background sync: real application date kept (${bg?.appliedAt?.slice(0, 10)})`);
 
   // 1. hh.ru: vacancy page, user clicks "Откликнуться" → button turns into "Вы откликнулись"
   await serve('https://hh.ru/vacancy/990000001*', `<!doctype html><html><head><meta charset="utf-8">
@@ -150,6 +161,25 @@ try {
   const rr = await waitFor(async () => (await listApps('Ромашка')).items?.[0]);
   check(rr?.externalSource === 'rabotaru' && rr?.company.name === 'Ромашка' && rr?.source?.name === 'Работа.ру', `rabota.ru: imported "${rr?.company.name} · ${rr?.position.name}" (source ${rr?.source?.name})`);
 
+  // 6b. "Apply on company website": the user is asked on returning to the board, and only "Yes" saves it
+  await serve('https://www.linkedin.com/jobs/view/4400000888/*', `<!doctype html><html><head><meta charset="utf-8"></head><body>
+    <div class="jobs-unified-top-card"><h1 class="job-details-jobs-unified-top-card__job-title">Data Engineer</h1>
+    <div class="job-details-jobs-unified-top-card__company-name"><a>Northwind</a></div>
+    <a id="ext" aria-label="Apply to Data Engineer on company website" href="https://careers.northwind-example.com/jobs/77">Apply</a></div></body></html>`);
+  await serve('https://careers.northwind-example.com/jobs/77', `<!doctype html><html><head><meta charset="utf-8"><title>Data Engineer — Northwind</title></head><body><h1>Data Engineer</h1><form><button>Submit</button></form></body></html>`);
+  await page.goto('https://www.linkedin.com/jobs/view/4400000888/');
+  await page.waitForTimeout(1200);
+  await page.click('#ext');
+  await page.waitForURL(/northwind-example/);
+  await page.waitForTimeout(8500);
+  await page.goBack();
+  const yes = await waitFor(async () => ((await page.locator('#heyreply-toast button:not(.no)').count()) ? page.locator('#heyreply-toast button:not(.no)') : null), 6000);
+  check(!!yes, 'external apply: "did you apply on the employer site?" prompt shown on return');
+  check(!(await listApps('Northwind')).total, 'external apply: nothing saved before the answer');
+  await yes?.click();
+  const nw = await waitFor(async () => (await listApps('Northwind')).items?.[0]);
+  check(nw?.externalSource === 'linkedin' && nw?.position.name === 'Data Engineer', `external apply: saved after "Yes" as "${nw?.company.name} · ${nw?.position.name}"`);
+
   // 7. Server down → queued → delivered later
   const sw2 = ctx.serviceWorkers()[0];
   await sw2.evaluate(() => chrome.storage.local.get('settings').then(({ settings }) => chrome.storage.local.set({ settings: { ...settings, serverUrl: 'http://localhost:3999' } })));
@@ -167,6 +197,26 @@ try {
   check(habr?.externalSource === 'habr', 'back online: queued habr application delivered');
   const popupText = await popup.locator('body').innerText();
   check(/Ext E2E/.test(popupText), 'popup: shows the connected account');
+
+  // 7b. Manual add from the popup for a site the extension doesn't know; adding the same link again is a no-op
+  await popup.reload();
+  await popup.click('#addOpen');
+  await popup.fill('#fCompany', 'Fabrikam');
+  await popup.fill('#fPosition', 'Site Reliability Engineer');
+  await popup.fill('#fUrl', 'https://jobs.fabrikam-example.com/sre?ref=newsletter');
+  await popup.selectOption('#fStatus', 'INTERVIEW');
+  await popup.fill('#fDate', '2026-09-15');
+  await popup.click('#addSave');
+  await popup.locator('#addResult:not([hidden])').waitFor({ timeout: 8000 });
+  const fab = (await listApps('Fabrikam')).items?.[0];
+  check(fab?.status === 'INTERVIEW' && fab?.externalSource === 'web' && fab?.appliedAt?.startsWith('2026-09-15'), `manual add: saved "${fab?.company.name} · ${fab?.position.name}" (${fab?.status}, ${fab?.appliedAt?.slice(0, 10)})`);
+  await popup.click('#addOpen');
+  await popup.fill('#fCompany', 'Fabrikam');
+  await popup.fill('#fPosition', 'Site Reliability Engineer');
+  await popup.fill('#fUrl', 'https://jobs.fabrikam-example.com/sre/');
+  await popup.click('#addSave');
+  await popup.waitForTimeout(1500);
+  check((await listApps('Fabrikam')).total === 1, `manual add: same link again → no duplicate ("${await popup.locator('#addResult').innerText()}")`);
 
   // 8. Revoked token is rejected and the item stays queued
   await call(`/me/tokens/${tok.id}`, { method: 'DELETE' });

@@ -2,6 +2,8 @@ import { z } from 'zod';
 import { APP_STATUSES, CURRENCIES, IMPORT_PLATFORMS, LOCALES, SALARY_TYPES, THEMES, WORK_FORMATS } from './enums';
 
 const name = z.string().trim().min(1).max(160);
+/** Only currencies the app can show and aggregate; free-form codes would make a salary vanish from the analytics. */
+const currency = z.string().trim().toUpperCase().pipe(z.enum(CURRENCIES));
 
 /** Only web links: `javascript:` / `data:` URLs would execute when the user clicks "Open vacancy". */
 export const httpUrl = z
@@ -61,7 +63,7 @@ export const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(),
   locale: z.enum(LOCALES).optional(),
   theme: z.enum(THEMES).optional(),
-  defaultCurrency: z.string().trim().min(3).max(3).toUpperCase().optional(),
+  defaultCurrency: currency.optional(),
   defaultSalaryType: z.enum(SALARY_TYPES).optional(),
   ghostingDays: z.number().int().min(3).max(90).optional(),
 });
@@ -78,7 +80,7 @@ export const applicationBaseSchema = z.object({
   vacancyUrl: httpUrl.optional().nullable().or(z.literal('').transform(() => null)),
   salaryFrom: salary,
   salaryTo: salary,
-  currency: z.string().trim().min(3).max(3).toUpperCase().optional().nullable(),
+  currency: currency.optional().nullable(),
   salaryType: z.enum(SALARY_TYPES).optional().nullable(),
   appliedAt: z.coerce.date().optional(),
   status: z.enum(APP_STATUSES).optional(),
@@ -99,7 +101,9 @@ export const updateApplicationSchema = applicationBaseSchema
     offerAmount: salary,
     nextStepAt: z.coerce.date().optional().nullable(),
     rejectionReason: z.string().max(160).optional().nullable(),
-  });
+  })
+  // A patch carrying both ends is checked here; a patch with one end is checked against the stored value in the service
+  .refine((v) => v.salaryFrom == null || v.salaryTo == null || v.salaryFrom <= v.salaryTo, { message: 'salary_range', path: ['salaryTo'] });
 export type UpdateApplicationInput = z.infer<typeof updateApplicationSchema>;
 
 export const changeStatusSchema = z.object({
@@ -139,7 +143,7 @@ export type ListApplicationsQuery = z.infer<typeof listApplicationsQuerySchema>;
 
 export const bulkActionSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(500),
-  action: z.enum(['status', 'delete', 'archive', 'tag']),
+  action: z.enum(['status', 'delete', 'archive', 'tag', 'restore']),
   status: z.enum(APP_STATUSES).optional(),
   tagName: name.optional(),
 });
@@ -182,6 +186,20 @@ export const importItemSchema = z.object({
 export type ImportItem = z.infer<typeof importItemSchema>;
 
 export const importBatchSchema = z.object({ items: z.array(importItemSchema).min(1).max(200) });
+
+/**
+ * An application the user adds by hand from the extension popup on a site the extension has no adapter for
+ * (a company careers page, an unknown ATS). The vacancy link, when given, identifies it: adding it twice is a no-op.
+ */
+export const manualImportSchema = z.object({
+  companyName: name,
+  positionName: name,
+  vacancyUrl: httpUrl.optional().nullable(),
+  locationName: optionalName,
+  status: z.enum(APP_STATUSES).optional().nullable(),
+  appliedAt: z.coerce.date().optional().nullable(),
+});
+export type ManualImport = z.infer<typeof manualImportSchema>;
 export type ImportBatch = z.infer<typeof importBatchSchema>;
 
 export type ImportOutcome = 'created' | 'updated' | 'unchanged' | 'linked' | 'error';

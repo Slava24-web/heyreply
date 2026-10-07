@@ -1,5 +1,6 @@
 'use client';
 import { Dialog } from 'radix-ui';
+import { useTranslations } from 'next-intl';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -24,6 +25,7 @@ export function Sheet({
   header?: React.ReactNode;
   onEscapeKeyDown?: (e: KeyboardEvent) => void;
 }) {
+  const tc = useTranslations('common');
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -47,7 +49,7 @@ export function Sheet({
                 <Dialog.Title className="font-display text-lg font-medium tracking-tight">{title}</Dialog.Title>
                 {description ? <Dialog.Description className="mt-1 text-[13px] text-muted">{description}</Dialog.Description> : null}
               </div>
-              <Dialog.Close className="rounded-[8px] p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label="Close">
+              <Dialog.Close className="rounded-[8px] p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={tc('close')}>
                 <X className="size-4" />
               </Dialog.Close>
             </div>

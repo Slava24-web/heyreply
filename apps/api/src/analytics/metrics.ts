@@ -54,8 +54,10 @@ export function summary(rows: MetricRow[], ghostingDays: number, now = new Date(
   const total = rows.length;
   const responded = rows.filter((r) => r.firstResponseAt).length;
   const ghosted = rows.filter((r) => isGhosted(r, ghostingDays, now)).length;
+  // An application entered afterwards already in a later status has its response stamped at the application date: the
+  // real wait is unknown, and counting it as 0 days would drag the median down. It still counts as a response above.
   const responseDays = rows
-    .filter((r) => r.firstResponseAt)
+    .filter((r) => r.firstResponseAt && r.firstResponseAt.getTime() > r.appliedAt.getTime())
     .map((r) => Math.max(0, (r.firstResponseAt!.getTime() - r.appliedAt.getTime()) / DAY));
   const med = median(responseDays);
   return {

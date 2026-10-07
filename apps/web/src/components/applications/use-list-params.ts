@@ -33,7 +33,8 @@ export function useListParams() {
   const filters = useMemo<ListFilters>(() => {
     const arr = (k: string) => (sp.get(k) ? sp.get(k)!.split(',').filter(Boolean) : []);
     return {
-      q: sp.get('q') ?? undefined,
+      // The API accepts at most 200 characters; a longer link would make every list request fail
+      q: sp.get('q')?.slice(0, 200) || undefined,
       status: arr('status'),
       sourceId: arr('sourceId'),
       positionId: arr('positionId'),

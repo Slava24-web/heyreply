@@ -120,6 +120,16 @@
     "acceptPersonalData": "I give my <consent>consent to personal data processing</consent>",
     "consentRequired": "You can’t create an account without this consent"
   },
+  "a11y": {
+    "clear": "Clear",
+    "removeTag": "Remove tag “{name}”",
+    "removeFilter": "Remove filter “{name}”",
+    "selectRow": "Select application: {name}",
+    "selectAll": "Select all applications",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "funnel": "Funnel stages"
+  },
   "errors": {
     "INVALID_CREDENTIALS": "Wrong email or password",
     "EMAIL_TAKEN": "An account with this email already exists",
@@ -130,6 +140,9 @@
     "RESET_TOKEN_INVALID": "The link is invalid or expired",
     "WRONG_PASSWORD": "Current password is incorrect",
     "DICT_IN_USE": "This value is used by applications — merge it into another one first",
+    "SALARY_RANGE": "The upper salary can’t be lower than the lower one",
+    "DICT_IN_TRASH": "The value is still used by recently deleted applications (kept for 30 days). Merge it into another value or wait",
+    "SAME_PASSWORD": "The new password must differ from the current one",
     "DICT_DUPLICATE": "This value already exists",
     "VALIDATION_ERROR": "Please check the fields",
     "APPLICATION_NOT_FOUND": "Application not found",
@@ -160,8 +173,8 @@
   },
   "stage": {
     "applied": "Applied",
-    "screening": "Response",
-    "test": "Assessment",
+    "screening": "Screening",
+    "test": "Test task",
     "interview": "Interview",
     "offer": "Offer"
   },
@@ -263,6 +276,7 @@
       "updatedAt": "Updated",
       "tags": "Tags"
     },
+    "view": "View",
     "selected": "Selected: {count}",
     "bulkStatus": "Change status",
     "bulkTag": "Add tag",
@@ -270,6 +284,8 @@
     "bulkDelete": "Delete",
     "bulkDeleteConfirm": "Delete selected applications?",
     "bulkDeleteText": "You can restore them within 30 days",
+    "bulkDeleted": "Deleted: {count}",
+    "bulkRestoreFailed": "Could not restore the applications",
     "bulkDone": "Done: {count}",
     "deleted": "Application deleted",
     "emptyTitle": "Your applications will live here",
@@ -296,6 +312,7 @@
     "openVacancy": "Open vacancy",
     "duplicate": "Duplicate",
     "delete": "Delete",
+    "deleted": "Application deleted",
     "deleteConfirm": "Delete application?",
     "deleteText": "You can restore it within 30 days",
     "statusChanged": "Status: {status}",
@@ -333,6 +350,10 @@
     "upcoming": "Upcoming steps",
     "waiting": "No reply for over {days} days",
     "markNoResponse": "Mark as “No response”",
+    "markNoResponseConfirm": "Move {count} applications to “No response”?",
+    "markNoResponseText": "Every application in this list changes status and the history keeps a record. You can undo it right after.",
+    "markNoResponseConfirmLabel": "Move",
+    "undoFailed": "Could not restore the previous statuses",
     "markedNoResponse": "Updated: {count}",
     "nothingUrgent": "Nothing urgent. A good day to send a couple of applications.",
     "insights": "Insights",
@@ -409,6 +430,7 @@
     "merged": "Values merged",
     "deleted": "Deleted",
     "renamed": "Saved",
+    "deleteText": "The value disappears from the suggestions. If applications use it, merge it into another one first.",
     "deleteConfirm": "Delete “{name}”?",
     "empty": "Nothing here yet"
   },
@@ -468,7 +490,7 @@
         "Application date: when you send it and when you open My applications",
         "Source: HeadHunter is filled in automatically"
       ],
-      "status": "Open My applications on hh.ru (hh.ru/applicant/negotiations): the extension reads the cards and updates statuses in heyreply, such as an invitation or a rejection. Older applications are added with their real dates when the board shows them. It works on hh.ru, hh.kz and rabota.by.",
+      "status": "Every few hours while you are on hh.ru, the extension reads My applications (hh.ru/applicant/negotiations) in the background and updates statuses in heyreply, such as an invitation or a rejection — no need to open it. This also picks up applications made in the hh mobile app. Older applications are added with their real dates when the board shows them. It works on hh.ru, hh.kz and rabota.by.",
       "steps": [
         "Install the heyreply extension for Chrome or Firefox.",
         "In heyreply open Settings → Integrations, create a token and paste it into the extension together with the site address.",
@@ -652,10 +674,10 @@
   },
   "integrations": {
     "extensionTitle": "Browser extension",
-    "extensionText": "Adds applications automatically when you apply on any of 26 job boards and updates statuses when you open “My applications” on hh.ru, LinkedIn, Habr Career or Indeed. It never needs your board passwords.",
+    "extensionText": "Adds applications automatically when you apply on any of 26 job boards. Statuses come from “My applications” on hh.ru (the extension reads it in the background while you are on the site), LinkedIn, Habr Career and Indeed. It never needs your board passwords.",
     "step1": "Install the heyreply extension for Chrome or Firefox.",
     "step2": "Create a token here and paste it into the extension together with this site’s address.",
-    "step3": "Apply as usual — applications appear on their own. Open “My applications” on the board now and then to pull in status changes.",
+    "step3": "Apply as usual — applications appear on their own. If you apply on an employer’s site or the site isn’t recognised, the extension asks about it, or you can add it with the button in the extension window. Statuses on LinkedIn, Habr Career and Indeed are pulled in when you open “My applications”.",
     "tokenName": "Token name",
     "defaultName": "My browser",
     "create": "Create token",

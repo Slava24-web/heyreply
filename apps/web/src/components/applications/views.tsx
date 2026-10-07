@@ -101,6 +101,7 @@ interface RowProps {
 
 /** Memoized: a sheet opening or one row being selected must not re-render the other hundreds of rows. */
 const Row = memo(function Row({ a, cols, template, height, on, ctx, onOpen, onSelect }: RowProps) {
+  const ta = useTranslations('a11y');
   return (
     <div
       role="row"
@@ -114,7 +115,7 @@ const Row = memo(function Row({ a, cols, template, height, on, ctx, onOpen, onSe
       style={{ gridTemplateColumns: template, height }}
     >
       <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-        <input type="checkbox" aria-label="Select" className="size-4 accent-[var(--primary)]" checked={on} onChange={(e) => onSelect([a.id], e.target.checked)} />
+        <input type="checkbox" aria-label={ta('selectRow', { name: a.company.name })} className="size-4 accent-[var(--primary)]" checked={on} onChange={(e) => onSelect([a.id], e.target.checked)} />
       </div>
       {cols.map((c) => (
         <div role="cell" key={c.key} className="flex min-w-0 items-center px-3">
@@ -143,6 +144,7 @@ export function TableView({
   compact: boolean;
 }) {
   const t = useTranslations('list.col');
+  const ta = useTranslations('a11y');
   const { openApp } = useUIActions();
   const f = useFormat();
   const tf = useTranslations('format');
@@ -161,7 +163,7 @@ export function TableView({
       <div role="table" className="min-w-[960px]" aria-rowcount={items.length}>
         <div role="row" className="grid items-center border-b border-border bg-surface-2/40 text-[12px] font-medium text-subtle" style={{ gridTemplateColumns: template }}>
           <div className="flex h-11 items-center justify-center">
-            <input type="checkbox" aria-label="Select all" className="size-4 accent-[var(--primary)]" checked={allOn} onChange={(e) => onSelect(items.map((a) => a.id), e.target.checked)} />
+            <input type="checkbox" aria-label={ta('selectAll')} className="size-4 accent-[var(--primary)]" checked={allOn} onChange={(e) => onSelect(items.map((a) => a.id), e.target.checked)} />
           </div>
           {cols.map((c) => {
             const active = sort.replace('-', '') === c.sort;

@@ -1,5 +1,5 @@
-import type { Observed } from './types';
-import { apiUrl, getSettings, getState, saveState, type RecentItem } from './settings';
+import type { ManualItem, ManualResult, Observed } from './types';
+import { apiUrl, getSettings, getState, saveState, type RecentItem, type Settings } from './settings';
 import { backoffMinutes, itemKey, MAX_ATTEMPTS, sanitize, sendBatch, SyncError, type Post } from './sync';
 
 const MAX_QUEUE = 500;
@@ -42,10 +42,70 @@ function notifySaved(created: Observed[]) {
 
 let flushing: Promise<void> | null = null;
 
-async function enqueue(items: Observed[]) {
+const poster =
+  (settings: Settings): Post =>
+  (items) =>
+    fetch(apiUrl(settings, '/import/applications'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
+      body: JSON.stringify({ items }),
+    });
+
+async function recordManual(item: ManualItem, result: RecentItem['result']) {
+  const s = await getState();
+  if (result === 'created') s.totals.created++;
+  if (result === 'updated' || result === 'linked') s.totals.updated++;
+  s.recent = [{ platform: item.platform ?? null, companyName: item.companyName, positionName: item.positionName, status: item.status, result, at: Date.now() }, ...s.recent].slice(0, 20);
+  s.lastSyncAt = Date.now();
+  await saveState(s);
+}
+
+/**
+ * "Add manually" from the popup. Sent right away so the popup can say what happened. A vacancy on a known board goes
+ * through the regular import (its id deduplicates it with automatic capture) and waits in the queue when offline;
+ * any other page goes to /import/manual, where the link is the identity.
+ */
+async function manualAdd(item: ManualItem): Promise<ManualResult> {
+  const settings = await getSettings();
+  if (!settings.token) return { error: 'NO_TOKEN' };
+  if (item.platform && item.externalId) {
+    const obs = sanitize({ ...item, platform: item.platform, externalId: item.externalId, origin: 'apply' });
+    if (!obs) return { error: 'INVALID' };
+    try {
+      const [outcome] = await sendBatch([obs], poster(settings));
+      if (outcome === 'rejected' || outcome === 'error') return { error: 'INVALID' };
+      await recordManual(item, outcome);
+      return { outcome };
+    } catch (e) {
+      const code = e instanceof Error ? e.message : 'NETWORK';
+      if (code === 'BAD_TOKEN') return { error: code };
+      await enqueue([obs], { manual: true });
+      return { outcome: 'queued' };
+    }
+  }
+  try {
+    const res = await fetch(apiUrl(settings, '/import/manual'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
+      body: JSON.stringify({ companyName: item.companyName, positionName: item.positionName, vacancyUrl: item.vacancyUrl || null, locationName: item.locationName || null, status: item.status ?? null, appliedAt: item.appliedAt ?? null }),
+    });
+    if (res.status === 401) return { error: 'BAD_TOKEN' };
+    if (res.status === 429) return { error: 'RATE_LIMIT' };
+    if (res.status === 400 || res.status === 422) return { error: res.status === 422 ? 'LIMIT' : 'INVALID' };
+    if (!res.ok) return { error: 'NETWORK' };
+    const { outcome } = (await res.json()) as { outcome: 'created' | 'updated' | 'unchanged' | 'linked' };
+    await recordManual(item, outcome);
+    return { outcome };
+  } catch {
+    return { error: 'NETWORK' };
+  }
+}
+
+async function enqueue(items: Observed[], { manual = false } = {}) {
   const settings = await getSettings();
   const state = await getState();
-  const allowed = items.filter((i) => !settings.disabled.includes(i.platform)).map((i) => sanitize(i)).filter((i): i is Observed => !!i);
+  // A platform switched off in the popup stops automatic capture; an application the user adds by hand still goes through
+  const allowed = items.filter((i) => manual || !settings.disabled.includes(i.platform)).map((i) => sanitize(i)).filter((i): i is Observed => !!i);
   // Keep one entry per vacancy+origin: the latest observation wins
   const map = new Map(state.queue.map((i) => [itemKey(i), i]));
   for (const i of allowed) map.set(itemKey(i), i);
@@ -65,12 +125,7 @@ async function doFlush(skip: Set<string> = new Set()) {
     await saveState(initial);
     return updateBadge(initial.queue.length, true);
   }
-  const post: Post = (items) =>
-    fetch(apiUrl(settings, '/import/applications'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${settings.token}` },
-      body: JSON.stringify({ items }),
-    });
+  const post = poster(settings);
 
   // One pass over what is queued now. Items that failed stay queued for the next pass, so this can't loop on them.
   const pass = initial.queue.filter((i) => !skip.has(itemKey(i)));
@@ -144,6 +199,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
   if (msg?.type === 'observed' && Array.isArray(msg.items)) {
     for (const i of msg.items as Observed[]) if (i.origin === 'apply') watchTab(i.platform, _sender.tab?.id);
     enqueue(msg.items as Observed[]).then(() => reply({ ok: true }));
+    return true;
+  }
+  if (msg?.type === 'manual' && msg.item) {
+    manualAdd(msg.item as ManualItem).then(reply);
     return true;
   }
   if (msg?.type === 'flush') {

@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
-import { CURRENCIES, registerSchema } from '@heyreply/shared';
+import { CURRENCIES, registerSchema, type Currency } from '@heyreply/shared';
 import { Button } from '@/components/ui/button';
 import { Card, Skeleton } from '@/components/ui/card';
 import { Field, Input, NativeSelect } from '@/components/ui/input';
@@ -179,7 +179,7 @@ export function SettingsPage() {
                   />
                 </Field>
                 <Field label={t('defaultCurrency')}>
-                  <NativeSelect value={me.defaultCurrency} onChange={(e) => patch({ defaultCurrency: e.target.value })}>
+                  <NativeSelect value={me.defaultCurrency} onChange={(e) => patch({ defaultCurrency: e.target.value as Currency })}>
                     {CURRENCIES.map((c) => (
                       <option key={c}>{c}</option>
                     ))}

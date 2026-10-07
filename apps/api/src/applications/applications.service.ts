@@ -1,7 +1,9 @@
 import { HttpStatus, Injectable } from '@nestjs/common';
 import {
   detectSourceByUrl,
+  FORMAT_LABELS,
   normalizeName,
+  STATUS_LABELS,
   type BulkActionInput,
   type ChangeStatusInput,
   type CreateApplicationInput,
@@ -12,6 +14,8 @@ import {
 } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { assertApplicationQuota } from './quota';
+import { config } from '../config';
+import { escapeLike } from '../common/like';
 import { DictionariesService } from '../dictionaries/dictionaries.service';
 import { AppError } from '../common/errors';
 import type { Prisma } from '../generated/prisma/client';
@@ -80,7 +84,11 @@ export class ApplicationsService {
 
   async update(userId: string, id: string, input: UpdateApplicationInput): Promise<ApplicationDto> {
     await this.prisma.$transaction(async (tx) => {
-      await this.owned(tx, userId, id);
+      const current = await this.owned(tx, userId, id);
+      // The patch may carry only one end of the range: judge it against what is stored for the other
+      const from = input.salaryFrom !== undefined ? input.salaryFrom : current.salaryFrom;
+      const to = input.salaryTo !== undefined ? input.salaryTo : current.salaryTo;
+      if (from != null && to != null && from > to) throw new AppError(HttpStatus.BAD_REQUEST, 'SALARY_RANGE');
       const data: Prisma.ApplicationUncheckedUpdateInput = {};
       if (input.companyName) data.companyId = await this.dict.resolve(tx, userId, 'companies', input.companyName);
       if (input.positionName) data.positionId = await this.dict.resolve(tx, userId, 'positions', input.positionName);
@@ -150,6 +158,8 @@ export class ApplicationsService {
   }
 
   async bulk(userId: string, input: BulkActionInput) {
+    // Undo of a bulk delete: the live-only lookup below would not find these rows
+    if (input.action === 'restore') return this.bulkRestore(userId, input.ids);
     const ids = (await this.prisma.application.findMany({ where: { userId, id: { in: input.ids }, deletedAt: null }, select: { id: true } })).map(
       (a) => a.id,
     );
@@ -172,15 +182,27 @@ export class ApplicationsService {
     return { ok: true, affected: ids.length };
   }
 
+  private async bulkRestore(userId: string, ids: string[]) {
+    const deleted = (await this.prisma.application.findMany({ where: { userId, id: { in: ids }, deletedAt: { not: null } }, select: { id: true } })).map((a) => a.id);
+    if (deleted.length) {
+      // Same cap as creating: restoring must not slip past it
+      const used = await this.prisma.application.count({ where: { userId, deletedAt: null } });
+      if (used + deleted.length > config().MAX_APPLICATIONS_PER_USER) throw new AppError(HttpStatus.UNPROCESSABLE_ENTITY, 'APPLICATION_LIMIT');
+      await this.prisma.application.updateMany({ where: { id: { in: deleted } }, data: { deletedAt: null, archivedAt: null } });
+    }
+    return { ok: true, affected: deleted.length };
+  }
+
   buildWhere(userId: string, q: Partial<ListApplicationsQuery>): Prisma.ApplicationWhereInput {
     const and: Prisma.ApplicationWhereInput[] = [];
     if (q.q) {
-      const nq = normalizeName(q.q);
+      const nq = escapeLike(normalizeName(q.q));
+      const note = escapeLike(q.q);
       and.push({
         OR: [
           { company: { normalizedName: { contains: nq } } },
           { position: { normalizedName: { contains: nq } } },
-          { note: { contains: q.q, mode: 'insensitive' } },
+          { note: { contains: note, mode: 'insensitive' } },
         ],
       });
     }
@@ -252,6 +274,10 @@ export class ApplicationsService {
     return row ? toApplicationDto(row) : null;
   }
 
+  async csvLocale(userId: string): Promise<'ru' | 'en'> {
+    return (await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { locale: true } })).locale === 'ru' ? 'ru' : 'en';
+  }
+
   async exportAll(userId: string, q: Partial<ListApplicationsQuery> = {}) {
     const rows = await this.prisma.application.findMany({
       where: this.buildWhere(userId, q),
@@ -271,7 +297,7 @@ export class ApplicationsService {
     return rows.map((r) => ({ ...toApplicationDto(r), archivedAt: r.archivedAt?.toISOString() ?? null, deletedAt: r.deletedAt?.toISOString() ?? null }));
   }
 
-  toCsv(items: ApplicationDto[]) {
+  toCsv(items: ApplicationDto[], locale: 'ru' | 'en' = 'en') {
     const head = [
       'appliedAt', 'company', 'position', 'status', 'source', 'location', 'workFormat',
       'salaryFrom', 'salaryTo', 'currency', 'salaryType', 'offerAmount', 'coverLetter', 'vacancyUrl', 'tags', 'note',
@@ -284,7 +310,7 @@ export class ApplicationsService {
     };
     const lines = items.map((a) =>
       [
-        a.appliedAt.slice(0, 10), a.company.name, a.position.name, a.status, a.source?.name, a.location?.name, a.workFormat,
+        a.appliedAt.slice(0, 10), a.company.name, a.position.name, STATUS_LABELS[locale][a.status] ?? a.status, a.source?.name, a.location?.name, a.workFormat ? (FORMAT_LABELS[locale][a.workFormat] ?? a.workFormat) : null,
         a.salaryFrom, a.salaryTo, a.currency, a.salaryType, a.offerAmount, a.coverLetter, a.vacancyUrl,
         a.tags.map((t) => t.name).join('|'), a.note,
       ].map(esc).join(','),

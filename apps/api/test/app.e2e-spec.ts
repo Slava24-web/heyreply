@@ -207,6 +207,18 @@ describe('heyreply API (e2e)', () => {
       await http.patch('/api/v1/me/password').set('Cookie', deviceA).send({ currentPassword: password, newPassword: 'newpass456' }).expect(200);
       await http.get('/api/v1/me').set('Cookie', deviceA).expect(200);
       await http.get('/api/v1/me').set('Cookie', deviceB).expect(401);
+      await http.patch('/api/v1/me/password').set('Cookie', deviceA).send({ currentPassword: 'newpass456', newPassword: 'newpass456' }).expect(400).expect((r) => expect(r.body.code).toBe('SAME_PASSWORD'));
+      // A stolen session must not be able to guess the password: wrong answers lock the confirmation (the change above
+      // was a correct answer, so the counter starts from zero)
+      const now = 'newpass456';
+      for (let i = 0; i < 4; i++) await http.patch('/api/v1/me/password').set('Cookie', deviceA).send({ currentPassword: `guess-${i}`, newPassword: 'another789' }).expect(400);
+      await http.delete('/api/v1/me').set('Cookie', deviceA).send({ password: 'guess-4' }).expect(400);
+      const locked = await http.patch('/api/v1/me/password').set('Cookie', deviceA).send({ currentPassword: now, newPassword: 'another789' }).expect(429);
+      expect(locked.body.code).toBe('LOGIN_LOCKED');
+      await http.delete('/api/v1/me').set('Cookie', deviceA).send({ password: now }).expect(429);
+      // Signing in has its own counters and keeps working; nothing was changed or deleted
+      await http.post('/api/v1/auth/login').send({ email, password: now }).expect(200);
+      // Replaying the revoked device's refresh token is treated as theft and ends every session, so it goes last
       await http.post('/api/v1/auth/refresh').set('Cookie', [pick(deviceB, 'refresh_token')!]).expect(401);
     });
 
@@ -314,6 +326,63 @@ describe('heyreply API (e2e)', () => {
       expect(list.body.items[0]).toMatchObject({ externalSource: 'linkedin', status: 'VIEWED' });
     });
 
+    it('keeps the salary range valid on edit, whichever end changes', async () => {
+      const http = request(app.getHttpServer());
+      const id = (await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Range Co', positionName: 'Dev', salaryFrom: 100, salaryTo: 200 }).expect(201)).body.id;
+      const patch = (b: object) => http.patch(`/api/v1/applications/${id}`).set('Cookie', jarB).send(b);
+      expect((await patch({ salaryFrom: 300 }).expect(400)).body.code).toBe('SALARY_RANGE');
+      expect((await patch({ salaryTo: 50 }).expect(400)).body.code).toBe('SALARY_RANGE');
+      await patch({ salaryFrom: 400, salaryTo: 300 }).expect(400);
+      await patch({ salaryFrom: 150, salaryTo: 300 }).expect(200);
+      await patch({ salaryTo: null }).expect(200); // an open-ended range is fine
+      await patch({ salaryFrom: 900 }).expect(200);
+    });
+
+    it('accepts only supported currencies', async () => {
+      const http = request(app.getHttpServer());
+      await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Cur Co', positionName: 'Dev', salaryFrom: 1, currency: 'ZZZ' }).expect(400);
+      expect((await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Cur Co', positionName: 'Dev', salaryFrom: 1, currency: 'usd' }).expect(201)).body.currency).toBe('USD');
+      await http.patch('/api/v1/me').set('Cookie', jarB).send({ defaultCurrency: 'XYZ' }).expect(400);
+    });
+
+    it('treats % and _ in a search as plain characters, and merges position groups regardless of case', async () => {
+      const http = request(app.getHttpServer());
+      await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Fifty%Off', positionName: 'Dev', note: 'a_b' }).expect(201);
+      await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Plain Co', positionName: 'Dev' }).expect(201);
+      const total = async (q: string) => (await http.get(`/api/v1/applications?q=${encodeURIComponent(q)}`).set('Cookie', jarB).expect(200)).body.total;
+      expect(await total('%')).toBe(1);
+      expect(await total('y%o')).toBe(1);
+      expect(await total('_')).toBe(1);
+      expect(await total('\\')).toBe(0);
+      expect(await total('plain')).toBe(1);
+      const a = await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Grp Co', positionName: 'Grp One' }).expect(201);
+      const b = await http.post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Grp Co', positionName: 'Grp Two' }).expect(201);
+      await http.patch(`/api/v1/dictionaries/positions/${a.body.position.id}`).set('Cookie', jarB).send({ groupName: 'Frontend' }).expect(200);
+      const second = await http.patch(`/api/v1/dictionaries/positions/${b.body.position.id}`).set('Cookie', jarB).send({ groupName: 'frontend' }).expect(200);
+      expect(second.body.groupName).toBe('Frontend');
+    });
+
+    it('explains why a dictionary value cannot be deleted while deleted applications still hold it', async () => {
+      const app1 = (await http().post('/api/v1/applications').set('Cookie', jarB).send({ companyName: 'Trash Co', positionName: 'Dev' }).expect(201)).body;
+      const del = (id: string) => http().delete(`/api/v1/dictionaries/companies/${id}`).set('Cookie', jarB);
+      expect((await del(app1.company.id).expect(409)).body.code).toBe('DICT_IN_USE');
+      await http().delete(`/api/v1/applications/${app1.id}`).set('Cookie', jarB).expect(200);
+      expect((await del(app1.company.id).expect(409)).body.code).toBe('DICT_IN_TRASH');
+    });
+
+    it('restores applications deleted in bulk (undo), respecting what is already live', async () => {
+      const mk = async (n: string) => (await http().post('/api/v1/applications').set('Cookie', jarB).send({ companyName: n, positionName: 'Undo' }).expect(201)).body.id as string;
+      const [a, b] = [await mk('UndoCo A'), await mk('UndoCo B')];
+      const bulk = (action: string, ids: string[]) => http().post('/api/v1/applications/bulk').set('Cookie', jarB).send({ ids, action });
+      expect((await bulk('delete', [a, b]).expect(201)).body.affected).toBe(2);
+      expect((await http().get('/api/v1/applications?q=UndoCo').set('Cookie', jarB)).body.total).toBe(0);
+      expect((await bulk('restore', [a, b]).expect(201)).body.affected).toBe(2);
+      expect((await http().get('/api/v1/applications?q=UndoCo').set('Cookie', jarB)).body.total).toBe(2);
+      // Restoring what is not deleted is a no-op, and other users' ids are never touched
+      expect((await bulk('restore', [a, b]).expect(201)).body.affected).toBe(0);
+      expect((await bulk('restore', ['00000000-0000-4000-8000-000000000000']).expect(201)).body.affected).toBe(0);
+    });
+
     it('does not resurrect an application the user deleted', async () => {
       const item = { platform: 'habr', externalId: '1000168750', companyName: 'Deleted Co', positionName: 'Dev' };
       await imp([item]).expect(200);
@@ -321,6 +390,30 @@ describe('heyreply API (e2e)', () => {
       await http().delete(`/api/v1/applications/${id}`).set('Cookie', jarB).expect(200);
       expect((await imp([{ ...item, status: 'INTERVIEW', origin: 'sync' }]).expect(200)).body).toMatchObject({ unchanged: 1, created: 0 });
       expect((await http().get('/api/v1/applications?q=Deleted').set('Cookie', jarB)).body.total).toBe(0);
+    });
+
+    it('adds an application by hand from a page without a board adapter, once per vacancy link', async () => {
+      const manual = (body: object) => http().post('/api/v1/import/manual').set('Authorization', `Bearer ${token}`).set('Origin', 'chrome-extension://abcdef').send(body);
+      const body = { companyName: 'ООО «Ромашка»', positionName: 'QA Engineer', vacancyUrl: 'https://careers.romashka.example/jobs/42?utm_source=tg', status: 'INTERVIEW', appliedAt: '2026-09-01T12:00:00.000Z' };
+      expect((await manual(body).expect(200)).body).toEqual({ outcome: 'created' });
+      // Same page, other tracking parameters: the link is the identity
+      expect((await manual({ ...body, vacancyUrl: 'https://careers.romashka.example/jobs/42/' }).expect(200)).body).toEqual({ outcome: 'unchanged' });
+
+      const list = await http().get('/api/v1/applications?q=Ромашка').set('Cookie', jarB).expect(200);
+      expect(list.body.total).toBe(1);
+      expect(list.body.items[0]).toMatchObject({ status: 'INTERVIEW', externalSource: 'web', company: { name: 'Ромашка' }, source: { name: 'Сайт компании' } });
+      expect(list.body.items[0].appliedAt.slice(0, 10)).toBe('2026-09-01');
+
+      // Without a link it is a plain manual application; a second identical add links to it instead of duplicating
+      const noLink = { companyName: 'Без ссылки', positionName: 'Dev' };
+      expect((await manual(noLink).expect(200)).body).toEqual({ outcome: 'created' });
+      expect((await manual(noLink).expect(200)).body).toEqual({ outcome: 'linked' });
+      const plain = await http().get('/api/v1/applications?q=Без ссылки').set('Cookie', jarB).expect(200);
+      expect(plain.body.total).toBe(1);
+      expect(plain.body.items[0].externalSource).toBeNull();
+
+      expect((await manual({ companyName: 'X', positionName: 'Y', vacancyUrl: 'javascript:alert(1)' })).status).toBe(400);
+      await http().post('/api/v1/import/manual').set('Cookie', jarB).send(noLink).expect(401);
     });
 
     it('validates input and isolates users', async () => {

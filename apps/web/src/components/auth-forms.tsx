@@ -23,6 +23,7 @@ function Heading({ title, subtitle }: { title: string; subtitle: string }) {
 }
 
 function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+  const ta = useTranslations('a11y');
   const [show, setShow] = useState(false);
   return (
     <div className="relative">
@@ -31,7 +32,7 @@ function PasswordInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
         type="button"
         onClick={() => setShow((s) => !s)}
         className="absolute top-1/2 right-2 -translate-y-1/2 rounded-[8px] p-1.5 text-subtle hover:text-text"
-        aria-label={show ? 'Hide password' : 'Show password'}
+        aria-label={show ? ta('hidePassword') : ta('showPassword')}
       >
         {show ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
       </button>
@@ -101,13 +102,11 @@ export function LoginForm({ locale }: { locale: string }) {
           <Input id="email" type="email" autoComplete="email" size_="lg" autoFocus aria-invalid={!!errors.email} {...form.register('email')} />
         </Field>
         <Field
-          label={
-            <span className="flex w-full items-center justify-between">
-              {t('password')}
-              <Link href="/forgot-password" className="text-[13px] font-normal text-primary hover:underline">
-                {t('forgot')}
-              </Link>
-            </span>
+          label={t('password')}
+          labelAside={
+            <Link href="/forgot-password" className="text-[13px] text-primary hover:underline">
+              {t('forgot')}
+            </Link>
           }
           htmlFor="password"
           error={errors.password && te('required')}

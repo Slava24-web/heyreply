@@ -3,14 +3,12 @@
  * It only observes: when a state-changing request that looks like "apply" succeeds, the isolated content script is told
  * (via a DOM event) which URL/body it was, so it can work out the vacancy and record the application in real time.
  */
-const APPLY_URL = /apply|applic|response|negotiat|otklik|candidat|submit/i;
+import { isApplyRequest } from './signals';
+
 const MAX_BODY = 4000;
 
-// GraphQL-style APIs hide the intent in the operation name rather than the URL
-const APPLY_OPERATION = /apply|application|otklik|отклик/i;
-
 function emit(method: string, url: string, body: string) {
-  if (method === 'GET' || method === 'HEAD' || !(APPLY_URL.test(url) || APPLY_OPERATION.test(body.slice(0, 400)))) return;
+  if (!isApplyRequest(method, url, body)) return;
   window.dispatchEvent(new CustomEvent('heyreply:apply', { detail: JSON.stringify({ url: url.slice(0, 1000), body: body.slice(0, MAX_BODY) }) }));
 }
 
@@ -54,4 +52,3 @@ XMLHttpRequest.prototype.send = function (this: XMLHttpRequest & { __hr?: { meth
   }
   return send.call(this, body);
 };
-export {};

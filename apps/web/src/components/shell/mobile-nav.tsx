@@ -1,5 +1,5 @@
 'use client';
-import { BarChart3, LayoutDashboard, ListChecks, Plus, Settings } from 'lucide-react';
+import { BarChart3, BookMarked, LayoutDashboard, ListChecks, Plus, Settings } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,7 @@ export function MobileNav() {
     { href: '/dashboard', label: t('overview'), icon: LayoutDashboard },
     { href: '/applications', label: t('applications'), icon: ListChecks },
     { href: '/analytics/sources', match: '/analytics', label: t('analytics'), icon: BarChart3 },
+    { href: '/dictionaries', label: t('dictionaries'), icon: BookMarked },
     { href: '/settings', label: t('settings'), icon: Settings },
   ];
   return (
@@ -31,10 +32,10 @@ export function MobileNav() {
             <Link
               key={i.href}
               href={i.href}
-              className={cn('flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium', active ? 'text-primary' : 'text-muted')}
+              className={cn('flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-0.5 text-[11px] font-medium', active ? 'text-primary' : 'text-muted')}
             >
               <i.icon className="size-5" />
-              {i.label}
+              <span className="max-w-full truncate">{i.label}</span>
             </Link>
           );
         })}

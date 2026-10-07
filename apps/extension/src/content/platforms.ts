@@ -18,6 +18,7 @@ export const ADAPTERS: Adapter[] = [
     confirmApply: true,
     isListPage: (u) => /^\/applicant\/negotiations/.test(u.pathname),
     listLink: /\/vacancy\/(\d+)/,
+    listUrl: '/applicant/negotiations',
   },
   {
     platform: 'linkedin',

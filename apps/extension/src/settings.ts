@@ -8,7 +8,8 @@ export interface Settings {
 }
 
 export interface RecentItem {
-  platform: ImportPlatform;
+  /** null for a page without a board adapter added by hand */
+  platform: ImportPlatform | null;
   companyName: string;
   positionName: string;
   status?: string | null;

@@ -7,7 +7,9 @@ import { Segmented } from '@/components/ui/segmented';
 import { SalaryHistogram, SalaryRateBars, SegmentBars, SegmentTable } from '@/components/charts/charts';
 import { PeriodSwitch, usePeriod } from '@/components/dashboard/period';
 import { Link } from '@/i18n/navigation';
+import { ANALYTICS_NAV } from '@/components/shell/nav-items';
 import { useFormat } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import { useByLocation, useSalary, useSegment } from '@/lib/queries';
 
 export type SegmentKind = 'sources' | 'positions' | 'locations' | 'salary';
@@ -208,10 +210,27 @@ function SalaryView() {
 
 export function AnalyticsPage({ segment }: { segment: SegmentKind }) {
   const t = useTranslations('analytics');
+  const tn = useTranslations('nav');
   const title = { sources: t('sourcesTitle'), positions: t('positionsTitle'), locations: t('locationsTitle'), salary: t('salaryTitle') }[segment];
   const lead = { sources: t('sourcesLead'), positions: t('positionsLead'), locations: t('locationsLead'), salary: t('salaryLead') }[segment];
   return (
     <div className="flex flex-col gap-6">
+      {/* The sidebar with these sections is not there on a phone */}
+      <nav aria-label={t('title')} className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 md:hidden">
+        {ANALYTICS_NAV.map((n) => {
+          const active = n.href.endsWith(`/${segment}`);
+          return (
+            <Link
+              key={n.href}
+              href={n.href}
+              aria-current={active ? 'page' : undefined}
+              className={cn('inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[13px] font-medium', active ? 'border-primary bg-primary-soft text-primary' : 'border-border text-muted')}
+            >
+              <n.icon className="size-3.5" /> {tn(n.key)}
+            </Link>
+          );
+        })}
+      </nav>
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-muted">

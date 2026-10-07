@@ -16,6 +16,16 @@ export interface Observed {
   origin: 'apply' | 'sync';
 }
 
+/** An application the user adds from the popup; `platform`/`externalId` are set when the page is a known board's vacancy. */
+export interface ManualItem extends VacancyData {
+  platform?: ImportPlatform | null;
+  externalId?: string | null;
+  vacancyUrl?: string | null;
+  status?: AppStatus | null;
+  appliedAt?: string | null;
+}
+export type ManualResult = { outcome: 'created' | 'updated' | 'unchanged' | 'linked' | 'queued' } | { error: string };
+
 export interface VacancyData {
   positionName: string;
   companyName: string;
@@ -52,4 +62,10 @@ export interface Adapter {
   isListPage?(url: URL): boolean;
   /** Link pattern of a vacancy inside the list (group 1 = id). */
   listLink?: RegExp;
+  /**
+   * Same-origin path of the "my applications" page when the board renders it on the server. The content script reads
+   * it in the background a few times a day while the user is on the board, which catches applications made in the
+   * board's mobile app or missed in real time, without the user having to open that page.
+   */
+  listUrl?: string;
 }

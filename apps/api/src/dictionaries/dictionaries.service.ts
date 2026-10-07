@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { normalizeName, SYSTEM_SOURCES, systemSourceName, type DictItem, type DictionaryType } from '@heyreply/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { AppError } from '../common/errors';
+import { escapeLike } from '../common/like';
 import { config } from '../config';
 import type { Prisma } from '../generated/prisma/client';
 
@@ -75,7 +76,7 @@ export class DictionariesService {
   async list(userId: string, type: DictionaryType, q?: string, limit = 200): Promise<DictItem[]> {
     const nq = q ? normalizeName(q) : '';
     const rows: Row[] = await this.delegate(this.prisma, type).findMany({
-      where: { userId, ...(nq ? { normalizedName: { contains: nq } } : {}) },
+      where: { userId, ...(nq ? { normalizedName: { contains: escapeLike(nq) } } : {}) },
       orderBy: [{ usageCount: 'desc' }, { lastUsedAt: { sort: 'desc', nulls: 'last' } }, { name: 'asc' }],
       take: nq ? 100 : limit,
     });
@@ -115,7 +116,16 @@ export class DictionariesService {
       patch.name = data.name.trim().replace(/\s+/g, ' ');
       patch.normalizedName = normalizedName;
     }
-    if (type === 'positions' && data.groupName !== undefined) patch.groupName = data.groupName?.trim() || null;
+    if (type === 'positions' && data.groupName !== undefined) {
+      const wanted = data.groupName?.trim().replace(/\s+/g, ' ') || null;
+      // "Frontend" and "frontend" are one group: reuse the spelling already in use instead of starting a second one
+      const same = wanted
+        ? (await d.findMany({ where: { userId, groupName: { not: null }, NOT: { id } }, select: { groupName: true } })).find(
+            (r: { groupName: string | null }) => r.groupName && normalizeName(r.groupName) === normalizeName(wanted),
+          )
+        : null;
+      patch.groupName = same?.groupName ?? wanted;
+    }
     return d.update({ where: { id }, data: patch });
   }
 
@@ -124,8 +134,11 @@ export class DictionariesService {
     const row = await d.findFirst({ where: { id, userId } });
     if (!row) throw new AppError(HttpStatus.NOT_FOUND, 'NOT_FOUND');
     if (type === 'companies' || type === 'positions') {
-      const used = await this.prisma.application.count({ where: { userId, [FK[type]!]: id } });
-      if (used > 0) throw new AppError(HttpStatus.CONFLICT, 'DICT_IN_USE');
+      const live = await this.prisma.application.count({ where: { userId, deletedAt: null, [FK[type]!]: id } });
+      if (live > 0) throw new AppError(HttpStatus.CONFLICT, 'DICT_IN_USE');
+      // Deleted applications wait 30 days for a restore and still hold the value
+      const trashed = await this.prisma.application.count({ where: { userId, [FK[type]!]: id } });
+      if (trashed > 0) throw new AppError(HttpStatus.CONFLICT, 'DICT_IN_TRASH');
     }
     await d.delete({ where: { id } });
     return { ok: true };

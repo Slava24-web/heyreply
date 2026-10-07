@@ -50,7 +50,7 @@ export class ApplicationsController {
     }
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="heyreply-${stamp}.csv"`);
-    res.send(this.apps.toCsv(items));
+    res.send(this.apps.toCsv(items, await this.apps.csvLocale(u.id)));
   }
 
   @Post()

@@ -159,15 +159,31 @@ export class AuthService {
     await this.revokeAll(user.id);
   }
 
-  async verifyPassword(userId: string, password: string) {
+  /**
+   * Re-entering the password inside a live session (change password, delete account) is a guessing oracle for anyone
+   * holding a stolen session, so wrong answers are counted per user and lock the check for 15 minutes. Login has its own
+   * counters; a user who mistyped here can still sign in.
+   */
+  private async confirmPassword(userId: string, password: string) {
+    const key = `confirm:${userId}`;
+    if (this.attempts.isLocked(key, null)) throw new AppError(HttpStatus.TOO_MANY_REQUESTS, 'LOGIN_LOCKED');
     const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!(await this.hasher.verify(user.passwordHash, password))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
+    if (!(await this.hasher.verify(user.passwordHash, password))) {
+      this.attempts.fail(key, null);
+      throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
+    }
+    this.attempts.success(key, null);
+    return user;
+  }
+
+  async verifyPassword(userId: string, password: string) {
+    await this.confirmPassword(userId, password);
   }
 
   /** Changing the password signs out every other device. */
   async changePassword(userId: string, current: string, next: string, currentSessionId?: string) {
-    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    if (!(await this.hasher.verify(user.passwordHash, current))) throw new AppError(HttpStatus.BAD_REQUEST, 'WRONG_PASSWORD');
+    await this.confirmPassword(userId, current);
+    if (current === next) throw new AppError(HttpStatus.BAD_REQUEST, 'SAME_PASSWORD');
     await this.prisma.user.update({
       where: { id: userId },
       data: { passwordHash: await this.hasher.hash(next), resetTokenHash: null, resetTokenExpires: null },

@@ -1,7 +1,9 @@
 'use client';
 import { Popover as P } from 'radix-ui';
 import { Plus, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { forwardRef, useId, useMemo, useRef, useState } from 'react';
+import { useFieldId } from './input';
 import { normalizeName, type DictItem } from '@heyreply/shared';
 import { cn } from '@/lib/utils';
 import { fieldClass } from './input';
@@ -144,6 +146,8 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
   { value, onChange, onCommit, options, createLabel, usageLabel, placeholder, size = 'md', autoFocus, invalid, id, name },
   ref,
 ) {
+  const ta = useTranslations('a11y');
+  const fieldId = useFieldId({ id });
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -183,7 +187,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
         <div className="relative">
           <input
             ref={ref}
-            id={id}
+            id={fieldId}
             name={name}
             role="combobox"
             aria-expanded={open && count > 0}
@@ -214,7 +218,7 @@ export const Combobox = forwardRef<HTMLInputElement, ComboboxProps>(function Com
             <button
               type="button"
               tabIndex={-1}
-              aria-label="Clear"
+              aria-label={ta('clear')}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onChange('')}
               className="absolute top-1/2 right-2 -translate-y-1/2 rounded-[6px] p-1 text-subtle hover:bg-surface-2 hover:text-text"
@@ -263,6 +267,8 @@ export function TagInput({
   createLabel: (v: string) => React.ReactNode;
   placeholder?: string;
 }) {
+  const ta = useTranslations('a11y');
+  const tagFieldId = useFieldId();
   const listId = useId();
   const fieldRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -296,13 +302,14 @@ export function TagInput({
           {value.map((t) => (
             <span key={t} className="inline-flex items-center gap-1 rounded-full bg-primary-soft py-0.5 pr-1 pl-2.5 text-xs font-medium text-primary">
               {t}
-              <button type="button" onClick={() => onChange(value.filter((x) => x !== t))} className="rounded-full p-0.5 hover:bg-primary/15" aria-label={`Remove ${t}`}>
+              <button type="button" onClick={() => onChange(value.filter((x) => x !== t))} className="rounded-full p-0.5 hover:bg-primary/15" aria-label={ta('removeTag', { name: t })}>
                 <X className="size-3" />
               </button>
             </span>
           ))}
           <input
             ref={inputRef}
+            id={tagFieldId}
             role="combobox"
             aria-expanded={open && count > 0}
             aria-controls={listId}

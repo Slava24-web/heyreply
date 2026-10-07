@@ -3,11 +3,12 @@ import { ArrowDownRight, ArrowUpRight, CalendarClock, Hourglass, Lightbulb, Plus
 import { useIsFetching, useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
 import { animate, useMotionValue, useTransform, motion } from 'motion/react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import type { InsightDto, SummaryDto } from '@heyreply/shared';
+import type { AppStatus, InsightDto, SummaryDto } from '@heyreply/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, MicroLabel, Skeleton } from '@/components/ui/card';
+import { ConfirmDialog } from '@/components/ui/sheet';
 import { FunnelBars, Heatmap, StatusBars, TimelineChart } from '@/components/charts/charts';
 import { CompanyAvatar } from '@/components/applications/company-avatar';
 import { StatusBadge } from '@/components/applications/status-badge';
@@ -164,7 +165,9 @@ function Attention() {
   const f = useFormat();
   const { openApp } = useUIActions();
   const { data, isLoading } = useAttention();
+  const tc = useTranslations('common');
   const bulk = useBulk();
+  const [confirm, setConfirm] = useState(false);
   if (isLoading) return <Skeleton className="h-64 w-full rounded-card" />;
   const empty = !data?.upcoming.length && !data?.waiting.length;
   return (
@@ -220,13 +223,34 @@ function Attention() {
             size="sm"
             className="mt-3 w-full"
             disabled={bulk.isPending}
-            onClick={async () => {
-              const r = await bulk.mutateAsync({ ids: data.waiting.map((a) => a.id), action: 'status', status: 'NO_RESPONSE' });
-              toast.success(t('markedNoResponse', { count: r.affected }));
-            }}
+            onClick={() => setConfirm(true)}
           >
             {t('markNoResponse')}
           </Button>
+          <ConfirmDialog
+            open={confirm}
+            onOpenChange={setConfirm}
+            title={t('markNoResponseConfirm', { count: data.waiting.length })}
+            description={t('markNoResponseText')}
+            confirmLabel={t('markNoResponseConfirmLabel')}
+            cancelLabel={tc('cancel')}
+            onConfirm={async () => {
+              const before = data.waiting.map((a) => ({ id: a.id, status: a.status }));
+              const r = await bulk.mutateAsync({ ids: before.map((a) => a.id), action: 'status', status: 'NO_RESPONSE' });
+              toast.success(t('markedNoResponse', { count: r.affected }), {
+                duration: 8000,
+                action: {
+                  label: tc('undo'),
+                  // Put every application back into the status it had, one bulk call per status
+                  onClick: () => {
+                    const byStatus = new Map<string, string[]>();
+                    for (const a of before) byStatus.set(a.status, [...(byStatus.get(a.status) ?? []), a.id]);
+                    void Promise.all([...byStatus].map(([status, ids]) => bulk.mutateAsync({ ids, action: 'status', status: status as AppStatus }))).catch(() => toast.error(t('undoFailed')));
+                  },
+                },
+              });
+            }}
+          />
         </div>
       ) : null}
     </Card>

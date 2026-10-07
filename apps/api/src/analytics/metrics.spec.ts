@@ -64,6 +64,19 @@ describe('summary', () => {
     expect(s.medianResponseDays).toBe(2);
   });
 
+  it('leaves applications entered with a known later status out of the median wait', () => {
+    const base = { maxStage: 4, coverLetter: false, workFormat: null, salaryFrom: null, salaryTo: null, currency: null, offerAmount: null, source: null, position: { id: 'p', name: 'p', groupName: null }, location: null, company: { name: 'c' }, status: 'INTERVIEW' as const };
+    const applied = new Date('2026-09-01T10:00:00Z');
+    const rows = [
+      { ...base, appliedAt: applied, firstResponseAt: applied }, // entered afterwards: response date unknown
+      { ...base, appliedAt: applied, firstResponseAt: new Date('2026-09-04T10:00:00Z') },
+    ];
+    const s = summary(rows, 14, now);
+    expect(s.responseRate).toBe(100);
+    expect(s.medianResponseDays).toBe(3);
+    expect(summary([rows[0]], 14, now).medianResponseDays).toBeNull();
+  });
+
   it('handles empty input', () => {
     expect(summary([], 14, now)).toMatchObject({ total: 0, responseRate: 0, medianResponseDays: null });
   });

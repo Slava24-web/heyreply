@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 
 function Row({ item, type, selected, onToggle, onDelete }: { item: DictItem; type: DictionaryType; selected: boolean; onToggle: () => void; onDelete: () => void }) {
   const t = useTranslations('dict');
+  const tc = useTranslations('common');
   const te = useErrorText();
   const qc = useQueryClient();
   const [editing, setEditing] = useState(false);
@@ -52,10 +53,10 @@ function Row({ item, type, selected, onToggle, onDelete }: { item: DictItem; typ
           }}
         >
           <Input autoFocus value={name} onChange={(e) => setName(e.target.value)} className="h-9" onKeyDown={(e) => e.key === 'Escape' && setEditing(false)} />
-          <Button size="icon-sm" type="submit" aria-label="Save">
+          <Button size="icon-sm" type="submit" aria-label={tc('save')}>
             <Check />
           </Button>
-          <Button size="icon-sm" variant="ghost" type="button" onClick={() => setEditing(false)} aria-label="Cancel">
+          <Button size="icon-sm" variant="ghost" type="button" onClick={() => setEditing(false)} aria-label={tc('cancel')}>
             <X />
           </Button>
         </form>
@@ -79,7 +80,7 @@ function Row({ item, type, selected, onToggle, onDelete }: { item: DictItem; typ
         <Button size="icon-sm" variant="ghost" onClick={() => setEditing(true)} aria-label={t('rename')}>
           <Pencil />
         </Button>
-        <Button size="icon-sm" variant="ghost" onClick={onDelete} aria-label="Delete" className="text-danger">
+        <Button size="icon-sm" variant="ghost" onClick={onDelete} aria-label={tc('delete')} className="text-danger">
           <Trash2 />
         </Button>
       </span>
@@ -242,6 +243,7 @@ export function DictionariesPage() {
         open={!!toDelete}
         onOpenChange={(o) => !o && setToDelete(null)}
         title={toDelete ? t('deleteConfirm', { name: toDelete.name }) : ''}
+        description={t('deleteText')}
         confirmLabel={tc('delete')}
         cancelLabel={tc('cancel')}
         danger

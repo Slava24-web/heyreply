@@ -14,6 +14,7 @@ import {
   STATUS_STAGE,
   type ApplicationDto,
   type AppStatus,
+  type Currency,
   type UpdateApplicationInput,
 } from '@heyreply/shared';
 import { Button } from '@/components/ui/button';
@@ -41,9 +42,10 @@ const toDateTimeInput = (iso: string | null) => {
 
 function Stepper({ app }: { app: ApplicationDto }) {
   const t = useTranslations('stage');
+  const ta = useTranslations('a11y');
   const failed = STATUS_STAGE[app.status] === 0;
   return (
-    <ol className="grid grid-cols-5 gap-1.5" aria-label="Funnel">
+    <ol className="grid grid-cols-5 gap-1.5" aria-label={ta('funnel')}>
       {STAGE_LABEL_KEYS.map((k, i) => {
         const reached = app.maxStage >= i + 1;
         const isLast = reached && app.maxStage === i + 1;
@@ -180,9 +182,11 @@ function DetailsForm({ app, onSaving }: { app: ApplicationDto; onSaving: (s: 'id
     try {
       await update.mutateAsync(patch);
       onSaving('saved');
+      return true;
     } catch (e) {
       onSaving('idle');
       toast.error(te(e));
+      return false;
     }
   };
   /** Saves a text field on blur if it changed. `build` receives the latest value. */
@@ -193,7 +197,10 @@ function DetailsForm({ app, onSaving }: { app: ApplicationDto; onSaving: (s: 'id
       setV((s) => ({ ...s, [key]: original }));
       return;
     }
-    save(build(val));
+    // A refused edit (e.g. a salary range turned upside down) puts the field back instead of showing a value that was not saved
+    void save(build(val)).then((ok) => {
+      if (!ok) setV((s) => ({ ...s, [key]: original }));
+    });
   };
   const num = (s: string) => (s ? Number(s) : null);
   const createLabel = (x: string) => tc('create', { value: x });
@@ -248,19 +255,21 @@ function DetailsForm({ app, onSaving }: { app: ApplicationDto; onSaving: (s: 'id
             inputMode="numeric"
             className="tabular"
             placeholder={tq('from')}
+            aria-label={`${tq('salary')} ${tq('from')}`}
             value={v.salaryFrom}
             onChange={(e) => setV((s) => ({ ...s, salaryFrom: e.target.value.replace(/\D/g, '') }))}
-            onBlur={() => commitText('salaryFrom', (x) => ({ salaryFrom: num(x), currency: app.currency ?? undefined }), app.salaryFrom != null ? String(app.salaryFrom) : '')}
+            onBlur={() => commitText('salaryFrom', (x) => ({ salaryFrom: num(x), currency: (app.currency as Currency | null) ?? undefined }), app.salaryFrom != null ? String(app.salaryFrom) : '')}
           />
           <Input
             inputMode="numeric"
             className="tabular"
             placeholder={tq('to')}
+            aria-label={`${tq('salary')} ${tq('to')}`}
             value={v.salaryTo}
             onChange={(e) => setV((s) => ({ ...s, salaryTo: e.target.value.replace(/\D/g, '') }))}
             onBlur={() => commitText('salaryTo', (x) => ({ salaryTo: num(x) }), app.salaryTo != null ? String(app.salaryTo) : '')}
           />
-          <NativeSelect value={app.currency ?? 'RUB'} onChange={(e) => save({ currency: e.target.value })}>
+          <NativeSelect value={app.currency ?? 'RUB'} aria-label={tq('currency')} onChange={(e) => save({ currency: e.target.value as Currency })}>
             {[...new Set([app.currency ?? 'RUB', ...CURRENCIES])].map((c) => (
               <option key={c}>{c}</option>
             ))}
@@ -340,6 +349,15 @@ function Timeline({ app }: { app: ApplicationDto }) {
       })}
     </ol>
   );
+}
+
+/**
+ * Text fields save when they lose focus. Closing the sheet with Escape unmounts it with the focus still inside the
+ * field, so the blur never reaches React and the edit is lost: move the focus out first, which commits it.
+ */
+function commitFocusedField() {
+  const el = document.activeElement;
+  if (el instanceof HTMLElement && el.closest('[role="dialog"]') && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) el.blur();
 }
 
 export function ApplicationSheet() {
@@ -427,7 +445,11 @@ export function ApplicationSheet() {
     <>
       <Sheet
         open={!!appId}
-        onOpenChange={(o) => !o && closeApp()}
+        onOpenChange={(o) => {
+          if (o) return;
+          commitFocusedField();
+          closeApp();
+        }}
         title={app ? `${app.company.name} — ${app.position.name}` : tc('loading')}
         width={580}
         header={header}
@@ -454,7 +476,7 @@ export function ApplicationSheet() {
                     workFormat: app.workFormat,
                     salaryFrom: app.salaryFrom,
                     salaryTo: app.salaryTo,
-                    currency: app.currency,
+                    currency: app.currency as Currency | null,
                     coverLetter: app.coverLetter,
                     tags: app.tags.map((x) => x.name),
                   });
@@ -503,7 +525,8 @@ export function ApplicationSheet() {
           const id = app.id;
           remove.mutate(id, {
             onSuccess: () =>
-              toast(t('delete'), {
+              toast(t('deleted'), {
+                duration: 8000,
                 action: { label: tc('restore'), onClick: () => restore.mutate(id) },
               }),
           });

@@ -6,6 +6,8 @@ const handleI18n = createMiddleware(routing);
 const PUBLIC = ['/login', '/register', '/forgot-password', '/reset-password'];
 // Legal documents are readable by everyone, signed in or not
 const LEGAL = ['/privacy', '/terms', '/consent'];
+// The signed-in app. Anything else that does not exist is a plain 404, not a detour through the sign-in page
+const PROTECTED = ['/dashboard', '/applications', '/analytics', '/dictionaries', '/settings'];
 const isDev = process.env.NODE_ENV === 'development';
 const httpsEnabled = !isDev && process.env.HTTPS_ENABLED !== 'false';
 
@@ -63,6 +65,7 @@ export default function proxy(request: NextRequest) {
   const path = hasLocalePrefix ? '/' + segments.slice(2).join('/') : pathname;
   const signedIn = request.cookies.has('has_session');
   const isLegal = LEGAL.includes(path);
+  const isProtected = PROTECTED.some((p) => path === p || path.startsWith(p + '/'));
   const isPublic = PUBLIC.some((p) => path === p || path.startsWith(p + '/'));
 
   // The start page is the public landing for visitors; people who are signed in go straight to the app
@@ -71,9 +74,10 @@ export default function proxy(request: NextRequest) {
   const isBoard = /^\/boards\/[a-z]+$/.test(path) || path === '/guides/application-conversion';
   if (isHome && signedIn) return withCsp(NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url)), csp);
 
-  if (!signedIn && !isPublic && !isLegal && !isHome && !isBoard) {
+  if (!signedIn && isProtected && !isPublic && !isLegal && !isHome && !isBoard) {
     const url = new URL(`/${locale}/login`, request.url);
-    if (path !== '/' && path !== '') url.searchParams.set('next', path);
+    // Keep the filters of the page the link pointed to (?status=REJECTED …) across the sign-in
+    if (path !== '/' && path !== '') url.searchParams.set('next', path + request.nextUrl.search);
     return withCsp(NextResponse.redirect(url), csp);
   }
   if (signedIn && isPublic && path !== '/reset-password') {

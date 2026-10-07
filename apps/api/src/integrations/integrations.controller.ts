@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { createTokenSchema, importBatchSchema, type ImportBatch } from '@heyreply/shared';
+import { createTokenSchema, importBatchSchema, manualImportSchema, type ImportBatch, type ManualImport } from '@heyreply/shared';
 import { z } from 'zod';
 import { CurrentUser, Public, type AuthUser } from '../common/decorators';
 import { ZodPipe } from '../common/zod.pipe';
@@ -55,5 +55,13 @@ export class ImportController {
   @Post('applications')
   importApplications(@CurrentUser() u: AuthUser, @Body(new ZodPipe(importBatchSchema)) body: ImportBatch) {
     return this.importer.importBatch(u.id, body.items);
+  }
+
+  /** One application added by hand from the extension popup on a page without a board adapter. */
+  @Throttle({ default: { ttl: 60_000, limit: 30 } })
+  @HttpCode(200)
+  @Post('manual')
+  importManual(@CurrentUser() u: AuthUser, @Body(new ZodPipe(manualImportSchema)) body: ManualImport) {
+    return this.importer.importManual(u.id, body);
   }
 }

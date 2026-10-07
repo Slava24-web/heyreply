@@ -27,7 +27,7 @@ export function SearchBox() {
   return (
     <div className="relative min-w-0 flex-1 sm:max-w-[320px]">
       <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle" />
-      <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="pl-9" aria-label={t('searchPlaceholder')} />
+      <Input value={q} maxLength={200} onChange={(e) => setQ(e.target.value)} placeholder={t('searchPlaceholder')} className="pl-9" aria-label={t('searchPlaceholder')} />
     </div>
   );
 }
@@ -164,6 +164,7 @@ export function FiltersPopover() {
 
 export function FilterChips() {
   const t = useTranslations('list');
+  const ta = useTranslations('a11y');
   const ts = useTranslations('status');
   const tf = useTranslations('format');
   const { filters, update, clear, activeCount } = useListParams();
@@ -198,7 +199,7 @@ export function FilterChips() {
       {chips.map((c) => (
         <span key={c.key} className="inline-flex h-7 items-center gap-1 rounded-full bg-primary-soft py-0 pr-1 pl-3 text-xs font-medium text-primary">
           {c.label}
-          <button onClick={c.remove} className="rounded-full p-0.5 hover:bg-primary/15" aria-label="Remove filter">
+          <button onClick={c.remove} className="rounded-full p-0.5 hover:bg-primary/15" aria-label={ta('removeFilter', { name: c.label })}>
             <X className="size-3" />
           </button>
         </span>

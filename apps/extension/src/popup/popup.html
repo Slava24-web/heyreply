@@ -25,6 +25,28 @@
 
     <section id="main" hidden>
       <div class="account"><span id="who"></span><button id="disconnect" class="link" data-i18n="disconnect"></button></div>
+      <div class="add">
+        <div id="addHead" class="add-head">
+          <div id="pageBox" class="page" hidden><span class="muted small" data-i18n="onThisPage"></span><span id="pageVacancy"></span></div>
+          <button id="addOpen" type="button" class="primary"></button>
+        </div>
+        <form id="addForm" hidden novalidate>
+          <label><span data-i18n="f_company"></span><input id="fCompany" maxlength="160" autocomplete="off" /></label>
+          <label><span data-i18n="f_position"></span><input id="fPosition" maxlength="160" autocomplete="off" /></label>
+          <label><span data-i18n="f_url"></span><input id="fUrl" type="url" spellcheck="false" autocomplete="off" /></label>
+          <div class="row2">
+            <label><span data-i18n="f_status"></span><select id="fStatus"></select></label>
+            <label><span data-i18n="f_date"></span><input id="fDate" type="date" /></label>
+          </div>
+          <label><span data-i18n="f_location"></span><input id="fLocation" maxlength="160" autocomplete="off" /></label>
+          <p id="addError" class="error small" hidden></p>
+          <div class="actions">
+            <button id="addCancel" type="button" data-i18n="cancel"></button>
+            <button id="addSave" type="submit" class="primary" data-i18n="save"></button>
+          </div>
+        </form>
+        <p id="addResult" class="result small" role="status" hidden></p>
+      </div>
       <div class="stats">
         <div><b id="created">0</b><span data-i18n="created"></span></div>
         <div><b id="updated">0</b><span data-i18n="updated"></span></div>

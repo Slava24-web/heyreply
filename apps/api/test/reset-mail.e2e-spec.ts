@@ -54,7 +54,10 @@ describe('password reset e-mail (e2e)', () => {
     const url = new URL(sent[0].link);
     expect(url.pathname).toBe('/ru/reset-password');
     const token = url.searchParams.get('token')!;
-    await request(app.getHttpServer()).post('/api/v1/auth/reset-password').send({ token, password: 'brandnew123' }).expect(200);
+    const reset = await request(app.getHttpServer()).post('/api/v1/auth/reset-password').send({ token, password: 'brandnew123' }).expect(200);
+    // The browser's old session cookies are cleared, so the sign-in page does not bounce straight back into the app
+    const cleared = ((reset.headers['set-cookie'] as unknown as string[]) ?? []).filter((c) => /^(has_session|access_token|refresh_token|access_ok)=;/.test(c));
+    expect(cleared).toHaveLength(4);
     await request(app.getHttpServer()).post('/api/v1/auth/login').send({ email, password: 'brandnew123' }).expect(200);
   });
 
