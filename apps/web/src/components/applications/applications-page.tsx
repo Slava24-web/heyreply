@@ -1,17 +1,19 @@
 'use client';
 import { Columns3, Download, Kanban, LayoutList, Rows3, Tag, Trash2, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger, Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { pageCount, Pagination, usePageSize } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { ConfirmDialog } from '@/components/ui/sheet';
-import { useUI } from '@/components/shell/ui-context';
+import { useUIActions } from '@/components/shell/ui-context';
 import { exportUrl } from '@/lib/api';
-import { useBulk, useInfiniteApplications } from '@/lib/queries';
+import { useApplications, useBulk, useInfiniteApplications } from '@/lib/queries';
+import { useStoredState } from '@/lib/use-stored';
 import { cn } from '@/lib/utils';
 import { FilterChips, FiltersPopover, SearchBox } from './filters';
 import { StatusBadge, StatusPicker } from './status-badge';
@@ -20,29 +22,9 @@ import { ALL_COLUMNS, FeedView, KanbanView, TableView, type ColumnKey } from './
 
 type View = 'table' | 'kanban' | 'feed';
 
-function useStored<T>(key: string, initial: T) {
-  const [v, setV] = useState<T>(initial);
-  useEffect(() => {
-    try {
-      // Per-viewer preference read after mount (localStorage is unavailable during SSR)
-      const raw = localStorage.getItem(key);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setV(JSON.parse(raw));
-      else if (key === 'heyreply.view' && window.innerWidth < 768) setV('feed' as T);
-    } catch {}
-  }, [key]);
-  const set = (next: T) => {
-    setV(next);
-    try {
-      localStorage.setItem(key, JSON.stringify(next));
-    } catch {}
-  };
-  return [v, set] as const;
-}
-
 function EmptyState() {
   const t = useTranslations('list');
-  const { openQuickAdd } = useUI();
+  const { openQuickAdd } = useUIActions();
   return (
     <div className="hero-gradient flex flex-col items-center rounded-panel border border-border px-6 py-20 text-center">
       <div className="mb-6 flex -space-x-3" aria-hidden>
@@ -125,41 +107,63 @@ function BulkBar({ ids, onClear }: { ids: string[]; onClear: () => void }) {
 
 export function ApplicationsPage() {
   const t = useTranslations('list');
-  const { filters, update, apiParams, activeCount } = useListParams();
-  const [view, setView] = useStored<View>('heyreply.view', 'table');
-  const [columns, setColumns] = useStored<ColumnKey[]>(
+  const { filters, update, apiParams, activeCount, page, setPage } = useListParams();
+  // Phones start with the feed; a saved choice always wins
+  const [view, setView] = useStoredState<View>('heyreply.view', 'table', { clientDefault: () => (window.innerWidth < 768 ? 'feed' : 'table') });
+  const [columns, setColumns] = useStoredState<ColumnKey[]>(
     'heyreply.columns',
     ALL_COLUMNS.filter((c) => c.defaultOn).map((c) => c.key),
   );
-  const [compact, setCompact] = useStored('heyreply.compact', false);
+  const [compact, setCompact] = useStoredState('heyreply.compact', false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const pageSize = view === 'kanban' ? 500 : 60;
-  const query = useInfiniteApplications(apiParams, pageSize);
-  const items = useMemo(() => query.data?.pages.flatMap((p) => p.items) ?? [], [query.data]);
-  const total = query.data?.pages[0]?.total ?? 0;
+  // The table and the feed are paged; the board needs every application at once to fill its columns
+  const paged = view !== 'kanban';
+  const [pageSize, setPageSize] = usePageSize();
+  const list = useApplications({ ...apiParams, cursor: (page - 1) * pageSize, limit: pageSize }, { enabled: paged });
+  const board = useInfiniteApplications(apiParams, 500, { enabled: !paged });
+  const boardItems = useMemo(() => board.data?.pages.flatMap((p) => p.items) ?? [], [board.data]);
+  const items = paged ? (list.data?.items ?? []) : boardItems;
+  const total = (paged ? list.data?.total : board.data?.pages[0]?.total) ?? 0;
+  const isLoading = paged ? list.isLoading : board.isLoading;
+
+  // A page that no longer exists (filtered down, last rows deleted) falls back to the last one
+  useEffect(() => {
+    if (paged && list.data && !list.isPlaceholderData && page > pageCount(list.data.total, pageSize)) setPage(pageCount(list.data.total, pageSize));
+  }, [paged, list.data, list.isPlaceholderData, page, pageSize, setPage]);
+
+  const top = useRef<HTMLDivElement>(null);
+  const goToPage = (n: number) => {
+    setPage(n);
+    top.current?.scrollIntoView({ block: 'start' });
+  };
 
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = sentinel.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && query.hasNextPage && !query.isFetchingNextPage && query.fetchNextPage(), { rootMargin: '600px' });
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && board.hasNextPage && !board.isFetchingNextPage && board.fetchNextPage(), { rootMargin: '600px' });
     io.observe(el);
     return () => io.disconnect();
-  }, [query]);
+  }, [board]);
 
   // Selection is meaningless once the filtered set changes
+  // (and across pages: a bulk action must only touch rows the user can see)
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setSelected(new Set()), [apiParams]);
+  useEffect(() => setSelected(new Set()), [apiParams, page, pageSize]);
 
-  const onSelect = (ids: string[], on: boolean) =>
-    setSelected((s) => {
-      const n = new Set(s);
-      ids.forEach((id) => (on ? n.add(id) : n.delete(id)));
-      return n;
-    });
+  // Stable, so the memoized table rows are not re-rendered by every selection change elsewhere
+  const onSelect = useCallback(
+    (ids: string[], on: boolean) =>
+      setSelected((s) => {
+        const n = new Set(s);
+        ids.forEach((id) => (on ? n.add(id) : n.delete(id)));
+        return n;
+      }),
+    [],
+  );
 
-  const isEmptyAccount = !query.isLoading && total === 0 && !activeCount && !filters.q;
+  const isEmptyAccount = !isLoading && total === 0 && !activeCount && !filters.q;
   const exportQuery = { ...apiParams } as Record<string, string | string[] | undefined>;
 
   return (
@@ -167,7 +171,7 @@ export function ApplicationsPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-[28px] font-medium tracking-[-0.02em] md:text-[34px]">{t('title')}</h1>
-          <p className="mt-1 text-sm text-muted tabular">{query.isLoading ? '…' : t('subtitle', { count: total })}</p>
+          <p className="mt-1 text-sm text-muted tabular">{isLoading ? '…' : t('subtitle', { count: total })}</p>
         </div>
         <div className="flex items-center gap-2">
           <Segmented
@@ -244,7 +248,8 @@ export function ApplicationsPage() {
             <FilterChips />
           </div>
 
-          {query.isLoading ? (
+          <div ref={top} className="scroll-mt-20" />
+          {isLoading ? (
             <div className="flex flex-col gap-2">
               {Array.from({ length: 8 }).map((_, i) => (
                 <Skeleton key={i} className="h-14 w-full rounded-[12px]" />
@@ -256,14 +261,19 @@ export function ApplicationsPage() {
               <p className="mt-1 text-sm text-muted">{t('noResultsText')}</p>
             </div>
           ) : view === 'table' ? (
-            <TableView items={items} columns={columns} sort={filters.sort} onSort={(s) => update({ sort: s })} selected={selected} onSelect={onSelect} compact={compact} />
+            <div className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}>
+              <TableView items={items} columns={columns} sort={filters.sort} onSort={(s) => update({ sort: s })} selected={selected} onSelect={onSelect} compact={compact} />
+            </div>
           ) : view === 'kanban' ? (
             <KanbanView items={items} />
           ) : (
-            <FeedView items={items} />
+            <div className={cn('transition-opacity', list.isPlaceholderData && 'opacity-60')}>
+              <FeedView items={items} />
+            </div>
           )}
+          {paged && !isLoading ? <Pagination page={page} pageSize={pageSize} total={total} onPageChange={goToPage} onPageSizeChange={setPageSize} /> : null}
           <div ref={sentinel} className="h-1" />
-          {query.isFetchingNextPage ? <Skeleton className="h-14 w-full rounded-[12px]" /> : null}
+          {board.isFetchingNextPage ? <Skeleton className="h-14 w-full rounded-[12px]" /> : null}
         </>
       )}
       {selected.size > 0 ? <BulkBar ids={[...selected]} onClear={() => setSelected(new Set())} /> : null}

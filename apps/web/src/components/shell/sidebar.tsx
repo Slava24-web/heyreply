@@ -2,12 +2,13 @@
 import { DonateNavLink } from './donate';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { Logo } from '@/components/logo';
 import { Tip } from '@/components/ui/popover';
+import { flagCodec, useStoredState } from '@/lib/use-stored';
 import { cn } from '@/lib/utils';
 import { ANALYTICS_NAV, BOTTOM_NAV, NAV } from './nav-items';
+import { navItemClass } from './nav-style';
 
 function NavLink({ href, label, icon: Icon, collapsed }: { href: string; label: string; icon: React.ElementType; collapsed: boolean }) {
   const pathname = usePathname();
@@ -16,11 +17,7 @@ function NavLink({ href, label, icon: Icon, collapsed }: { href: string; label: 
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={cn(
-        'group relative flex h-10 items-center gap-3 rounded-field px-3 text-sm font-medium transition-colors',
-        active ? 'bg-surface text-text shadow-[0_1px_3px_rgb(31_23_36/8%)] dark:bg-surface-2' : 'text-muted hover:bg-surface/60 hover:text-text dark:hover:bg-surface-2/60',
-        collapsed && 'justify-center px-0',
-      )}
+      className={navItemClass(active, collapsed)}
     >
       {active ? <span className="absolute top-2 bottom-2 left-0 w-[3px] rounded-full bg-primary" /> : null}
       <Icon className={cn('size-[18px] shrink-0', active ? 'text-primary' : '')} />
@@ -38,21 +35,9 @@ function NavLink({ href, label, icon: Icon, collapsed }: { href: string; label: 
 
 export function Sidebar() {
   const t = useTranslations('nav');
-  const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCollapsed(localStorage.getItem('heyreply.sidebar') === '1');
-    } catch {}
-  }, []);
-  const toggle = () => {
-    setCollapsed((c) => {
-      try {
-        localStorage.setItem('heyreply.sidebar', c ? '0' : '1');
-      } catch {}
-      return !c;
-    });
-  };
+  // Read before the first paint, so a collapsed sidebar never opens wide and then animates shut
+  const [collapsed, setCollapsed] = useStoredState('heyreply.sidebar', false, { codec: flagCodec });
+  const toggle = () => setCollapsed(!collapsed);
   return (
     <aside
       className={cn(

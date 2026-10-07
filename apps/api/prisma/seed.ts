@@ -20,9 +20,9 @@ const pick = <T>(arr: T[]) => arr[Math.floor(rnd() * arr.length)];
 const DAY = 86_400_000;
 
 const companies = [
-  'Яндекс', 'Ozon', 'Тинькофф', 'Avito', 'Wildberries', 'Сбер', 'VK', 'Kaspersky', 'Skyeng', 'Lamoda',
-  'Купер', 'HeadHunter', 'Контур', 'Positive Technologies', 'Ozon Fintech', 'Самокат', 'Альфа-Банк', 'Joom',
-  'Miro', 'JetBrains', 'Wrike', 'Revolut', 'Playrix', 'inDrive', 'Т-Банк', 'МТС', 'Билайн', '2ГИС', 'Додо',
+  'Нордлайн', 'Лумен', 'Парус', 'Кварц', 'Меридиан', 'Астрон', 'Вектор Софт', 'Облако 9', 'Полярис', 'Гринфлоу',
+  'Оптима', 'Сигма Лаб', 'Талисман', 'Фокус', 'Орбита', 'Невада Тех', 'Ритм', 'Joomly',
+  'Northwind', 'Brightpath', 'Cobalt', 'Helio', 'Pixelforge', 'Driveway', 'Эпсилон', 'Монолит', 'Стрела', 'Атлас', 'Добрый Код',
 ];
 const positions = [
   { name: 'Frontend Developer', group: 'Frontend' },

@@ -9,6 +9,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, Skeleton } from '@/components/ui/card';
 import { Input, NativeSelect } from '@/components/ui/input';
+import { clampPage, Pagination, usePageSize } from '@/components/ui/pagination';
 import { Segmented } from '@/components/ui/segmented';
 import { ConfirmDialog } from '@/components/ui/sheet';
 import { usePathname, useRouter } from '@/i18n/navigation';
@@ -110,6 +111,11 @@ export function DictionariesPage() {
 
   const items = (data ?? []).filter((i) => !filter || i.name.toLowerCase().includes(filter.toLowerCase()));
   const sel = [...selected];
+  const [pageSize, setPageSize] = usePageSize();
+  const [page, setPage] = useState(1);
+  // Derived: a search or a deletion can leave fewer pages than the one we were on
+  const current = clampPage(page, items.length, pageSize);
+  const shown = items.slice((current - 1) * pageSize, current * pageSize);
 
   return (
     <div className="flex flex-col gap-6">
@@ -122,13 +128,22 @@ export function DictionariesPage() {
         onChange={(v) => {
           if (!v) return;
           setSelected(new Set());
+          setPage(1);
           router.replace(`${pathname}?type=${v}`, { scroll: false });
         }}
         options={DICTIONARY_TYPES.map((d) => ({ value: d, label: t(d) }))}
         className="max-w-full self-start overflow-x-auto"
       />
       <div className="flex flex-wrap items-center gap-2">
-        <Input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={tc('search')} className="max-w-[260px]" />
+        <Input
+          value={filter}
+          onChange={(e) => {
+            setFilter(e.target.value);
+            setPage(1);
+          }}
+          placeholder={tc('search')}
+          className="max-w-[260px]"
+        />
         <form
           className="flex gap-2"
           onSubmit={async (e) => {
@@ -200,7 +215,7 @@ export function DictionariesPage() {
           </div>
         ) : items.length ? (
           <ul>
-            {items.map((i) => (
+            {shown.map((i) => (
               <Row
                 key={i.id}
                 item={i}
@@ -221,6 +236,7 @@ export function DictionariesPage() {
         ) : (
           <p className="p-10 text-center text-sm text-muted">{t('empty')}</p>
         )}
+        {!isLoading ? <Pagination className="border-t border-border/70 px-4 py-3" page={current} pageSize={pageSize} total={items.length} onPageChange={setPage} onPageSizeChange={setPageSize} /> : null}
       </Card>
       <ConfirmDialog
         open={!!toDelete}

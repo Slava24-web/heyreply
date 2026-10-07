@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { BackButton } from '@/components/legal/back-button';
 import { LegalLinks } from '@/components/legal/legal-links';
 import { Logo } from '@/components/logo';
 import { LocaleSwitch, ThemeToggle } from '@/components/shell/prefs';
@@ -23,7 +24,10 @@ export default async function LegalLayout({ children }: { children: React.ReactN
           <ThemeToggle />
         </div>
       </header>
-      <main className="flex-1 py-10">{children}</main>
+      <main className="flex-1 pt-6 pb-10">
+        <BackButton />
+        <div className="mt-6">{children}</div>
+      </main>
       <footer className="flex flex-col gap-3 border-t border-border pt-6">
         <LegalLinks sameTab />
         {donateUrl ? (

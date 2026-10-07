@@ -16,7 +16,7 @@ import { useErrorText } from '@/lib/errors';
 function Heading({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="mb-8">
-      <h2 className="font-display text-[28px] font-medium tracking-[-0.02em]">{title}</h2>
+      <h1 className="font-display text-[28px] font-medium tracking-[-0.02em]">{title}</h1>
       <p className="mt-2 text-[15px] text-muted">{subtitle}</p>
     </div>
   );

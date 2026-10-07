@@ -54,6 +54,14 @@ async function goToLogin() {
   window.location.href = `/${locale}/login${next && next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`;
 }
 
+/**
+ * `access_ok` is a marker cookie the API sets with the lifetime of the access token (see api/src/auth/cookies.ts). When it is
+ * gone the token has expired: refresh once up front, instead of letting every request of a burst fail with a 401 first.
+ */
+const accessMarkerMissing = () => typeof document !== 'undefined' && !/(?:^|;\s*)access_ok=/.test(document.cookie);
+/** If the marker never sticks (blocked cookies), do not turn every request into a refresh. */
+let lastUpfrontRefresh = 0;
+
 export async function api<T>(path: string, opts: { method?: string; body?: unknown; query?: Query; raw?: boolean } = {}): Promise<T> {
   const url = `/api/v1${path}${toQs(opts.query)}`;
   const init: RequestInit = {
@@ -62,6 +70,15 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     headers: opts.body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   };
+  if (!path.startsWith('/auth/') && accessMarkerMissing() && Date.now() - lastUpfrontRefresh > 60_000) {
+    lastUpfrontRefresh = Date.now();
+    const result = await refreshOnce();
+    if (result === 'throttled') throw new ApiError(429, 'TOO_MANY_REQUESTS', 'Try again later');
+    if (result === 'failed') {
+      await goToLogin();
+      throw new ApiError(401, 'UNAUTHORIZED', 'Session expired');
+    }
+  }
   let res = await fetch(url, init);
   if (res.status === 401 && !path.startsWith('/auth/')) {
     const result = await refreshOnce();

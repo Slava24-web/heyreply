@@ -19,9 +19,10 @@ import { cn } from '@/lib/utils';
 import { IntegrationsSection } from './integrations';
 import { LegalLinks } from '@/components/legal/legal-links';
 import { DonateCard, useDonateUrl } from '@/components/shell/donate';
-import { EmailImportSection } from './email-import';
 
 const BASE_SECTIONS = ['profile', 'preferences', 'integrations', 'security', 'sessions', 'data'] as const;
+// Module-level, so the section list keeps its identity between renders (the scroll-spy effect depends on it)
+const SECTIONS_WITH_SUPPORT = [...BASE_SECTIONS, 'support'] as const;
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -63,7 +64,7 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const { data: me, isLoading } = useMe();
   const donateUrl = useDonateUrl();
-  const SECTIONS = donateUrl ? ([...BASE_SECTIONS, 'support'] as const) : BASE_SECTIONS;
+  const SECTIONS = donateUrl ? SECTIONS_WITH_SUPPORT : BASE_SECTIONS;
   const update = useUpdateMe();
   const [name, setName] = useState('');
   const [pw, setPw] = useState({ currentPassword: '', newPassword: '' });
@@ -213,8 +214,6 @@ export function SettingsPage() {
 
           <Section id="integrations" title={t('integrations')}>
             <IntegrationsSection />
-            <div className="my-6 h-px bg-border" />
-            <EmailImportSection />
           </Section>
 
           <Section id="security" title={t('security')}>

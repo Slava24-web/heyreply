@@ -74,12 +74,10 @@ export class UsersController {
   async export(@CurrentUser() user: AuthUser, @Res() res: Response) {
     const userId = user.id;
     const row = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
-    const [applications, sessions, apiTokens, inboundAddresses, inboundEmails, companies, positions, locations, sources, tags] = await Promise.all([
+    const [applications, sessions, apiTokens, companies, positions, locations, sources, tags] = await Promise.all([
       this.applications.exportEverything(userId),
       this.prisma.session.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
       this.prisma.apiToken.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.inboundAddress.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } }),
-      this.prisma.inboundEmail.findMany({ where: { userId }, orderBy: { receivedAt: 'desc' } }),
       this.prisma.company.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
       this.prisma.position.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
       this.prisma.location.findMany({ where: { userId }, orderBy: { name: 'asc' } }),
@@ -103,10 +101,6 @@ export class UsersController {
       // Hashes of credentials are left out on purpose: they are secrets, not information about you
       sessions: sessions.map((s) => ({ userAgent: s.userAgent, ip: s.ip, createdAt: iso(s.createdAt), lastUsedAt: iso(s.lastUsedAt), expiresAt: iso(s.expiresAt), revokedAt: iso(s.revokedAt) })),
       integrationTokens: apiTokens.map((t) => ({ name: t.name, prefix: t.prefix, createdAt: iso(t.createdAt), lastUsedAt: iso(t.lastUsedAt), revokedAt: iso(t.revokedAt) })),
-      emailImport: {
-        addresses: inboundAddresses.map((a) => ({ createdAt: iso(a.createdAt), revokedAt: iso(a.revokedAt) })),
-        journal: inboundEmails.map((e) => ({ from: e.fromAddress, subject: e.subject, platform: e.platform, kind: e.kind, outcome: e.outcome, receivedAt: iso(e.receivedAt) })),
-      },
     });
   }
 

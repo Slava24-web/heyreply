@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { IMPORT_PLATFORMS, PLATFORM_INFO, platformSourceName, type ApiTokenDto, type PlatformGroup } from '@heyreply/shared';
+import { ExtensionInstall } from '@/components/extension-install';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/components/ui/sheet';
@@ -54,16 +55,17 @@ export function IntegrationsSection() {
           <div className="mt-3 flex flex-col gap-2.5">
             {(['ru', 'intl', 'ats'] as PlatformGroup[]).map((g) => (
               <div key={g} className="flex flex-wrap items-center gap-1.5">
-                <span className="mr-1 w-full text-[11px] font-semibold tracking-[0.06em] text-subtle uppercase sm:w-28">{t(`group_${g}`)}</span>
+                <span className="mr-1 w-full text-[11px] font-semibold tracking-[0.06em] whitespace-nowrap text-muted uppercase sm:w-36">{t(`group_${g}`)}</span>
                 {IMPORT_PLATFORMS.filter((p) => PLATFORM_INFO[p].group === g).map((p) => (
-                  <span key={p} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted">
+                  <span key={p} className="rounded-full border border-border-strong bg-surface-3 px-2.5 py-1 text-xs text-text">
                     {platformSourceName(p, locale)}
                   </span>
                 ))}
               </div>
             ))}
           </div>
-          <p className="mt-2 text-xs text-subtle">{t('atsHint')}</p>
+          <p className="mt-2 text-xs text-muted">{t('atsHint')}</p>
+          <ExtensionInstall size="sm" className="mt-4" />
         </div>
       </div>
 

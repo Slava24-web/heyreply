@@ -11,8 +11,8 @@ import { Card, CardHeader, MicroLabel, Skeleton } from '@/components/ui/card';
 import { FunnelBars, Heatmap, StatusBars, TimelineChart } from '@/components/charts/charts';
 import { CompanyAvatar } from '@/components/applications/company-avatar';
 import { StatusBadge } from '@/components/applications/status-badge';
-import { useUI } from '@/components/shell/ui-context';
-import { useFormat } from '@/lib/format';
+import { useUIActions } from '@/components/shell/ui-context';
+import { numberFormat, useFormat } from '@/lib/format';
 import { qk, useAttention, useBulk, useFunnel, useHeatmap, useInsights, useMe, useSummary, useTimeline } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/lib/use-mounted';
@@ -21,7 +21,8 @@ import { PeriodSwitch, usePeriod } from './period';
 function Counter({ value, decimals = 0, suffix = '' }: { value: number; decimals?: number; suffix?: string }) {
   const { tag } = useFormat();
   const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => `${new Intl.NumberFormat(tag, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(v)}${suffix}`);
+  // Runs on every animation frame: the formatter must not be rebuilt each time
+  const text = useTransform(mv, (v) => `${(numberFormat(tag, { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) ?? numberFormat(tag))!.format(v)}${suffix}`);
   useEffect(() => {
     const c = animate(mv, value, { duration: 0.9, ease: [0.2, 0.8, 0.2, 1] });
     return () => c.stop();
@@ -161,7 +162,7 @@ function Attention() {
   const t = useTranslations('dashboard');
   const tl = useTranslations('list');
   const f = useFormat();
-  const { openApp } = useUI();
+  const { openApp } = useUIActions();
   const { data, isLoading } = useAttention();
   const bulk = useBulk();
   if (isLoading) return <Skeleton className="h-64 w-full rounded-card" />;
@@ -261,7 +262,7 @@ export function Dashboard() {
   const mounted = useMounted();
   const { period } = usePeriod();
   const { data: me } = useMe();
-  const { openQuickAdd } = useUI();
+  const { openQuickAdd } = useUIActions();
   const summary = useSummary(period);
   const funnel = useFunnel(period);
   const timeline = useTimeline(period);

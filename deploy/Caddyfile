@@ -28,15 +28,6 @@
 	@direct not remote_ip {$ORIGIN_ALLOW:0.0.0.0/0 ::/0}
 	abort @direct
 
-	# The Cloudflare Email Worker posts whole messages (base64) — allow up to 3 MB there only
-	@inbound path /api/v1/inbound/*
-	handle @inbound {
-		request_body {
-			max_size 3MB
-		}
-		reverse_proxy web:3000
-	}
-
 	handle {
 		request_body {
 			max_size 1MB

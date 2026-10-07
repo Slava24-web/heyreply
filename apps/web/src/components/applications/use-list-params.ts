@@ -49,9 +49,28 @@ export function useListParams() {
     };
   }, [sp]);
 
+  // 1-based page of the paginated views; lives in the URL like the filters, so back/forward and shared links keep the place
+  const page = useMemo(() => {
+    const n = Number.parseInt(sp.get('page') ?? '', 10);
+    return Number.isFinite(n) && n > 1 ? n : 1;
+  }, [sp]);
+
+  const setPage = useCallback(
+    (n: number) => {
+      const next = new URLSearchParams(sp.toString());
+      if (n > 1) next.set('page', String(n));
+      else next.delete('page');
+      const qs = next.toString();
+      router.replace(`${pathname}${qs ? `?${qs}` : ''}`, { scroll: false });
+    },
+    [sp, router, pathname],
+  );
+
   const update = useCallback(
     (patch: Partial<Record<ArrayKey, string[]> & Record<ScalarKey, string | undefined>>) => {
       const next = new URLSearchParams(sp.toString());
+      // Any change of filter, search or sort starts again from the first page
+      next.delete('page');
       for (const [k, v] of Object.entries(patch)) {
         if (v == null || v === '' || (Array.isArray(v) && !v.length)) next.delete(k);
         else next.set(k, Array.isArray(v) ? v.join(',') : v);
@@ -81,5 +100,5 @@ export function useListParams() {
     return p;
   }, [filters]);
 
-  return { filters, update, clear, activeCount, apiParams };
+  return { filters, update, clear, activeCount, apiParams, page, setPage };
 }

@@ -11,11 +11,11 @@ import { useMe } from '@/lib/queries';
 import { initials } from '@/lib/utils';
 import { useMounted } from '@/lib/use-mounted';
 import { LocaleSwitch, ThemeToggle } from './prefs';
-import { useUI } from './ui-context';
+import { useUIActions } from './ui-context';
 
 export function Topbar() {
   const t = useTranslations('nav');
-  const { openQuickAdd, setPaletteOpen } = useUI();
+  const { openQuickAdd, setPaletteOpen } = useUIActions();
   const { data: rawMe } = useMe();
   const me = useMounted() ? rawMe : undefined;
   const router = useRouter();

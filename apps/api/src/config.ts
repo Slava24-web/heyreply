@@ -29,12 +29,6 @@ const schema = z
     /** Sender shown to the recipient, e.g. "heyreply <no-reply@example.com>" */
     MAIL_FROM: z.preprocess(emptyToUndefined, z.string().min(3).optional()),
     SWAGGER: z.enum(['true', 'false']).optional(),
-    /** E-mail import: domain routed by Cloudflare Email Routing to the Email Worker, e.g. in.heyreply.app */
-    INBOUND_EMAIL_DOMAIN: z.preprocess(emptyToUndefined, z.string().trim().toLowerCase().regex(/^[a-z0-9.-]+\.[a-z]{2,}$/).optional()),
-    /** Shared secret the Email Worker signs requests with (HMAC-SHA256) */
-    INBOUND_SECRET: z.preprocess(emptyToUndefined, z.string().min(32).optional()),
-    /** Only accept board e-mails with a valid DKIM signature of the board's domain (anti-spoofing) */
-    INBOUND_REQUIRE_DKIM: z.enum(['true', 'false']).default('true'),
   })
   .superRefine((v, ctx) => {
     if (v.NODE_ENV === 'production' && WEAK_SECRETS.includes(v.JWT_ACCESS_SECRET)) {
@@ -42,9 +36,6 @@ const schema = z
     }
     if (v.SMTP_URL && !v.MAIL_FROM) {
       ctx.addIssue({ code: 'custom', path: ['MAIL_FROM'], message: 'MAIL_FROM is required when SMTP_URL is set' });
-    }
-    if (v.INBOUND_EMAIL_DOMAIN && !v.INBOUND_SECRET) {
-      ctx.addIssue({ code: 'custom', path: ['INBOUND_SECRET'], message: 'INBOUND_SECRET is required when INBOUND_EMAIL_DOMAIN is set' });
     }
   });
 

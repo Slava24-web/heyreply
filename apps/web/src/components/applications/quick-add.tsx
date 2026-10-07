@@ -21,7 +21,7 @@ import { ConfirmDialog, Sheet } from '@/components/ui/sheet';
 import { useUI } from '@/components/shell/ui-context';
 import { api } from '@/lib/api';
 import { useErrorText } from '@/lib/errors';
-import { useFormat } from '@/lib/format';
+import { numberFormat, useFormat } from '@/lib/format';
 import { useCreateApplication, useDeleteApplication, useDictionary, useMe } from '@/lib/queries';
 import { cn } from '@/lib/utils';
 
@@ -101,7 +101,7 @@ function empty(currency: string, salaryType: SalaryType): FormState {
 }
 
 const digits = (s: string) => s.replace(/\D/g, '');
-const groupDigits = (s: string, tag: string) => (s ? new Intl.NumberFormat(tag).format(Number(s)) : '');
+const groupDigits = (s: string, tag: string) => (s ? numberFormat(tag)!.format(Number(s)) : '');
 
 function fromDto(a: ApplicationDto, keepCompany: boolean, base: FormState): FormState {
   return {

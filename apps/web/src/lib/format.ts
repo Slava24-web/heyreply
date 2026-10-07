@@ -4,12 +4,32 @@ import { useMemo } from 'react';
 
 const DAY = 86_400_000;
 
+/**
+ * Building an Intl.NumberFormat is far more expensive than calling format(), and lists, charts and animated counters
+ * format hundreds of numbers per render, so formatters are built once per (locale, options) and reused.
+ * An invalid option (e.g. an unknown currency code) is remembered too, so it doesn't throw again on every call.
+ */
+const numberFormats = new Map<string, Intl.NumberFormat | null>();
+export function numberFormat(tag: string, options?: Intl.NumberFormatOptions): Intl.NumberFormat | null {
+  const key = `${tag}|${options ? JSON.stringify(options) : ''}`;
+  let f = numberFormats.get(key);
+  if (f === undefined) {
+    try {
+      f = new Intl.NumberFormat(tag, options);
+    } catch {
+      f = null;
+    }
+    numberFormats.set(key, f);
+  }
+  return f;
+}
+
 export function useFormat() {
   const locale = useLocale();
   return useMemo(() => {
     const tag = locale === 'ru' ? 'ru-RU' : 'en-US';
-    const num = new Intl.NumberFormat(tag);
-    const pctFmt = new Intl.NumberFormat(tag, { maximumFractionDigits: 1 });
+    const num = numberFormat(tag)!;
+    const pctFmt = numberFormat(tag, { maximumFractionDigits: 1 })!;
     const dateFmt = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short' });
     const dateYFmt = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short', year: 'numeric' });
     const dateTimeFmt = new Intl.DateTimeFormat(tag, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
@@ -17,24 +37,11 @@ export function useFormat() {
 
     const money = (v: number, currency?: string | null) => {
       if (!currency) return num.format(v);
-      try {
-        return new Intl.NumberFormat(tag, { style: 'currency', currency, maximumFractionDigits: 0 }).format(v);
-      } catch {
-        return `${num.format(v)} ${currency}`;
-      }
+      const fmt = numberFormat(tag, { style: 'currency', currency, maximumFractionDigits: 0 });
+      return fmt ? fmt.format(v) : `${num.format(v)} ${currency}`;
     };
-    const compactMoney = (v: number, currency?: string | null) => {
-      try {
-        return new Intl.NumberFormat(tag, {
-          style: currency ? 'currency' : 'decimal',
-          currency: currency ?? undefined,
-          notation: 'compact',
-          maximumFractionDigits: 1,
-        }).format(v);
-      } catch {
-        return num.format(v);
-      }
-    };
+    const compactMoney = (v: number, currency?: string | null) =>
+      (numberFormat(tag, { style: currency ? 'currency' : 'decimal', currency: currency ?? undefined, notation: 'compact', maximumFractionDigits: 1 }) ?? num).format(v);
 
     return {
       tag,
