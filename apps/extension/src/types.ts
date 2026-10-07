@@ -41,6 +41,11 @@ export interface Adapter {
   companyFromUrl?(url: URL): string | null;
   /** Text that only appears on a vacancy page after the user has applied. */
   appliedMarker: RegExp;
+  /**
+   * The site fires apply-like requests while the form is merely opened (and the form can then be closed unsent), so a
+   * captured request is recorded only once the vacancy itself shows the applied marker.
+   */
+  confirmApply?: boolean;
   /** Where to look for the applied marker (defaults to the whole page). */
   appliedScope?: string[];
   /** "My applications" page with statuses. */

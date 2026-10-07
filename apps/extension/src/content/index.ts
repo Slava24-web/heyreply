@@ -200,6 +200,29 @@ document.addEventListener(
   true,
 );
 
+/**
+ * Opening the response form already triggers apply-like requests on some boards, and the form can be closed unsent.
+ * The application counts only when the vacancy shows the applied marker: read live on its own page, otherwise from
+ * the vacancy page fetched again (retried, the site may need a moment to register the response).
+ */
+async function confirmedApplied(adapter: NonNullable<ReturnType<typeof adapterFor>>, id: string): Promise<boolean> {
+  for (let attempt = 0; attempt < 6; attempt++) {
+    await new Promise((r) => setTimeout(r, attempt === 0 ? 1200 : 2000));
+    if (adapter.vacancyId(new URL(location.href)) === id) {
+      if (isApplied(document, adapter)) return true;
+      continue;
+    }
+    try {
+      const target = new URL(adapter.vacancyUrl(id));
+      const res = await fetch(target.pathname + target.search, { credentials: 'include', cache: 'no-store' });
+      if (res.ok && isApplied(new DOMParser().parseFromString(await res.text(), 'text/html'), adapter)) return true;
+    } catch {
+      /* offline or blocked: try again */
+    }
+  }
+  return false;
+}
+
 window.addEventListener('heyreply:apply', async (e) => {
   const adapter = adapterFor(new URL(location.href));
   if (!adapter) return;
@@ -213,6 +236,7 @@ window.addEventListener('heyreply:apply', async (e) => {
   if (!id) return;
   pending = null;
   clearPending(adapter.platform);
+  if (adapter.confirmApply && !(await confirmedApplied(adapter, id))) return;
   const vacancy = await vacancyFor(adapter, id);
   if (vacancy) send([{ platform: adapter.platform, externalId: id, vacancyUrl: adapter.vacancyUrl(id), ...vacancy, origin: 'apply' }]);
 });

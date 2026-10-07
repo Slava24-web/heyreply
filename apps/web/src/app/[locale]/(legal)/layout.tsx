@@ -1,3 +1,4 @@
+import { connection } from 'next/server';
 import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { BackButton } from '@/components/legal/back-button';
@@ -8,6 +9,7 @@ import { getDonateUrl } from '@/lib/donate';
 import { Link } from '@/i18n/navigation';
 
 export default async function LegalLayout({ children }: { children: React.ReactNode }) {
+  await connection(); // DONATE_URL is runtime env
   const t = await getTranslations('legal');
   const td = await getTranslations('donate');
   const donateUrl = getDonateUrl();

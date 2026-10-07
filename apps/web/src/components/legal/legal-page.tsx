@@ -1,9 +1,12 @@
+import { connection } from 'next/server';
 import { getTranslations } from 'next-intl/server';
 import { en } from '@/content/legal/en';
 import { ru } from '@/content/legal/ru';
 import { getOperator, legalEdition, type LegalDocKey } from '@/lib/legal';
 
 export async function LegalPage({ locale, doc }: { locale: string; doc: LegalDocKey }) {
+  // Operator details are runtime env (LEGAL_*); without this the page is prerendered at build time with them empty
+  await connection();
   const t = await getTranslations({ locale, namespace: 'legal' });
   const content = (locale === 'ru' ? ru : en)[doc](getOperator(locale));
   return (

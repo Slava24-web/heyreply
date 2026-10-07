@@ -15,6 +15,7 @@ export const ADAPTERS: Adapter[] = [
     appliedMarker: /вы\s+откликнулись|резюме\s+доставлено|отклик\s+отправлен|вы\s+уже\s+откликались/i,
     // Only the vacancy's own action area: "similar vacancies" cards carry the same badge for other jobs
     appliedScope: ['[data-qa*="vacancy-response"]', '.vacancy-actions'],
+    confirmApply: true,
     isListPage: (u) => /^\/applicant\/negotiations/.test(u.pathname),
     listLink: /\/vacancy\/(\d+)/,
   },
