@@ -9,7 +9,6 @@ import { ApplicationsModule } from './applications/applications.module';
 import { DictionariesModule } from './dictionaries/dictionaries.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { IntegrationsModule } from './integrations/integrations.module';
-import { InboundModule } from './inbound/inbound.module';
 import { RetentionModule } from './retention/retention.module';
 import { HealthController } from './health.controller';
 import { AllExceptionsFilter } from './common/exceptions.filter';
@@ -25,7 +24,6 @@ import { AllExceptionsFilter } from './common/exceptions.filter';
     ApplicationsModule,
     AnalyticsModule,
     IntegrationsModule,
-    InboundModule,
     RetentionModule,
   ],
   controllers: [HealthController],

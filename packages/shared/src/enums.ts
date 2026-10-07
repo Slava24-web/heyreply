@@ -52,7 +52,7 @@ export const REJECTION_REASONS = ['EXPERIENCE', 'SALARY', 'CLOSED', 'NO_REASON',
 export const CURRENCIES = ['RUB', 'USD', 'EUR', 'KZT', 'GEL', 'AMD', 'RSD'] as const;
 
 /** System sources with localized names and domains for auto-detection from a vacancy URL. */
-/** Job boards and ATS the extension and e-mail import understand (also used as `Application.externalSource`). */
+/** Job boards and ATS the extension understands (also used as `Application.externalSource`). */
 export const IMPORT_PLATFORMS = [
   'hh', 'linkedin', 'habr', 'superjob', 'getmatch', 'indeed',
   'avito', 'rabotaru', 'zarplata', 'trudvsem', 'geekjob', 'djinni', 'workua', 'robotaua',

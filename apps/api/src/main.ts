@@ -11,12 +11,10 @@ import { originGuard } from './common/origin.middleware';
 
 async function bootstrap() {
   const cfg = config();
-  // Body parsers are registered by hand: the e-mail webhook needs a larger limit than everything else
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
   // req.ip = client address as reported by our own proxy hops only (rate limiting depends on it)
   app.set('trust proxy', cfg.TRUST_PROXY_HOPS);
   app.disable('x-powered-by');
-  app.use('/api/v1/inbound/email', json({ limit: '2.5mb' }));
   app.use(json({ limit: '100kb' }));
   app.use(urlencoded({ extended: false, limit: '100kb' }));
   app.setGlobalPrefix('api/v1', { exclude: ['api/health'] });

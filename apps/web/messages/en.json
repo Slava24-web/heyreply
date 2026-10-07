@@ -1,7 +1,34 @@
 {
   "meta": {
     "title": "heyreply — job application tracker",
-    "description": "Log applications in seconds and see which search strategy actually works"
+    "description": "Log applications in seconds and see which search strategy actually works",
+    "pages": {
+      "login": {
+        "title": "Sign in",
+        "description": "Sign in to heyreply to see your job applications, their statuses and the statistics of your job search."
+      },
+      "register": {
+        "title": "Sign up — free job application tracker",
+        "description": "Create a free heyreply account: track job applications and statuses, see your funnel statistics and import applications from hh.ru, LinkedIn and 24 more boards."
+      },
+      "forgotPassword": {
+        "title": "Reset your password",
+        "description": "Forgot your heyreply password? Enter your e-mail address and we will send you a link to choose a new one."
+      },
+      "resetPassword": {
+        "title": "Choose a new password",
+        "description": "Set a new password for your heyreply account."
+      },
+      "home": {
+        "title": "Free job application tracker — heyreply",
+        "description": "A free job application tracker: the extension adds your applications from hh.ru, LinkedIn and 24 more job boards, and heyreply shows statuses and stats."
+      }
+    },
+    "legal": {
+      "privacy": "How heyreply handles your data: what we process, why, how long we keep it, who receives it and what rights you have.",
+      "terms": "The terms of using heyreply, a free tracker of job applications: your account, acceptable use, availability, liability and governing law.",
+      "consent": "Consent to the processing of personal data when you register with heyreply: the data, the purposes, the term and how to withdraw consent."
+    }
   },
   "common": {
     "save": "Save",
@@ -32,7 +59,8 @@
     "yesterday": "Yesterday",
     "notSpecified": "Not specified",
     "error": "Something went wrong",
-    "retry": "Retry"
+    "retry": "Retry",
+    "back": "Back"
   },
   "nav": {
     "overview": "Overview",
@@ -114,7 +142,6 @@
     "url": "Invalid link",
     "generic": "Couldn’t complete the action",
     "TOO_MANY_TOKENS": "You can have at most 10 tokens — revoke unused ones",
-    "INBOUND_DISABLED": "E-mail import is not configured on the server",
     "APPLICATION_LIMIT": "You have reached the application limit for an account. Delete some to add new ones",
     "DICT_LIMIT": "You have reached the dictionary size limit. Delete or merge unused entries"
   },
@@ -418,6 +445,115 @@
     "integrations": "Integrations",
     "support": "Support the author"
   },
+  "boards": {
+    "home": "Home",
+    "crumbLabel": "Breadcrumb",
+    "capturedTitle": "What heyreply records for you",
+    "stepsTitle": "How to connect",
+    "statusTitle": "Application statuses",
+    "tipsTitle": "Tips",
+    "ctaTitle": "Track applications without the manual work",
+    "ctaText": "Free, with no subscriptions. No job board passwords needed.",
+    "cta": "Create an account",
+    "otherTitle": "Other job boards",
+    "supported": "26 job boards are supported in total: regional and international boards and company hiring systems.",
+    "hh": {
+      "name": "HeadHunter (hh.ru)",
+      "metaTitle": "Track hh.ru applications automatically and for free",
+      "metaDescription": "How to track applications on hh.ru, hh.kz and rabota.by: the heyreply extension records an application when you send it and updates statuses from the My applications page.",
+      "h1": "Track your hh.ru applications",
+      "intro": "On hh.ru applications get lost quickly: dozens of vacancies, invitations that arrive a week later, and a list that never shows the big picture. The heyreply extension logs every application in a table and pulls statuses from the same pages, without your hh.ru password.",
+      "captured": [
+        "Vacancy and company name, link to the vacancy",
+        "City, work format and salary range when the vacancy states them",
+        "Application date: when you send it and when you open My applications",
+        "Source: HeadHunter is filled in automatically"
+      ],
+      "status": "Open My applications on hh.ru (hh.ru/applicant/negotiations): the extension reads the cards and updates statuses in heyreply, such as an invitation or a rejection. Older applications are added with their real dates when the board shows them. It works on hh.ru, hh.kz and rabota.by.",
+      "steps": [
+        "Install the heyreply extension for Chrome or Firefox.",
+        "In heyreply open Settings → Integrations, create a token and paste it into the extension together with the site address.",
+        "Apply on hh.ru as usual. Open My applications from time to time to pull in statuses."
+      ],
+      "tips": [
+        "\"Viewed\" on hh.ru is not yet a reply from the employer: heyreply keeps it as a separate status, so you can see how many applications were even opened.",
+        "Compare sources in the statistics to see which board gives more interviews for the same number of applications."
+      ]
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "metaTitle": "Track LinkedIn Jobs applications automatically and for free",
+      "metaDescription": "How to track applications on LinkedIn: the heyreply extension records Easy Apply and regular applications and updates statuses from the Applied list.",
+      "h1": "Track your LinkedIn applications",
+      "intro": "LinkedIn marks an application as a badge on the job card and gives you no statistics about them. The heyreply extension notices that you applied and records the job, the company and the date in your table.",
+      "captured": [
+        "Job and company name, link to the job",
+        "Location and work format when they are shown",
+        "Easy Apply: the \"Application sent\" confirmation is recognized right away",
+        "Source: LinkedIn is filled in automatically"
+      ],
+      "status": "Open My items → Applied on LinkedIn (saved jobs filtered by Applied): the extension reads the cards and updates the statuses and dates of your applications. LinkedIn changes its interface often, so the extension finds jobs by their links rather than by styling.",
+      "steps": [
+        "Install the heyreply extension for Chrome or Firefox.",
+        "In heyreply open Settings → Integrations, create a token and paste it into the extension together with the site address.",
+        "Apply on LinkedIn as usual. Open Applied whenever you want to refresh statuses."
+      ],
+      "tips": [
+        "If you sent some applications before installing the extension, open Applied once: the jobs and their dates are filled in retroactively.",
+        "For applications that go to a company site through LinkedIn, use quick add in heyreply: the link detects the source itself."
+      ]
+    },
+    "habr": {
+      "name": "Habr Career",
+      "metaTitle": "Track Habr Career applications automatically and for free",
+      "metaDescription": "How to track applications on Habr Career: the heyreply extension records applications to vacancies and reads statuses from the page with your applications.",
+      "h1": "Track your Habr Career applications",
+      "intro": "There are usually fewer applications on Habr Career, but they are more targeted, and a company's reply must not get lost. The heyreply extension records an application when you send it and keeps its status in one table with applications from other boards.",
+      "captured": [
+        "Vacancy and company name, career.habr.com/vacancies/… link",
+        "Application date",
+        "The status the board shows on the application card",
+        "Source: Habr Career is filled in automatically"
+      ],
+      "status": "Open the page with your applications on Habr Career: the extension reads the cards and updates statuses in heyreply. The token is only for the extension; your Habr password is never passed to it.",
+      "steps": [
+        "Install the heyreply extension for Chrome or Firefox.",
+        "In heyreply open Settings → Integrations, create a token and paste it into the extension together with the site address.",
+        "Apply as usual and open your applications page to refresh statuses."
+      ],
+      "tips": [
+        "Habr and hh.ru applications live in one table: filter by source to see where vacancies for your specialty reply more often.",
+        "Write down in the notes the salary expectations you named: they will matter at the final stage."
+      ]
+    },
+    "indeed": {
+      "name": "Indeed",
+      "metaTitle": "Track Indeed applications automatically and for free",
+      "metaDescription": "How to track applications on Indeed: the heyreply extension records applications when you send them and updates statuses from the Applied list in My Jobs.",
+      "h1": "Track your Indeed applications",
+      "intro": "Indeed collects jobs from many sites, and an application often ends on the company's own page. The heyreply extension records the application on the Indeed side so it does not get lost between tabs and e-mails.",
+      "captured": [
+        "Job and company name, link to the job",
+        "Application date: the \"application submitted\" confirmation is recognized right away",
+        "Salary range and currency when shown",
+        "Source: Indeed is filled in automatically"
+      ],
+      "status": "Open My Jobs on Indeed with the Applied filter: the extension reads the cards and updates the statuses and dates of your applications.",
+      "steps": [
+        "Install the heyreply extension for Chrome or Firefox.",
+        "In heyreply open Settings → Integrations, create a token and paste it into the extension together with the site address.",
+        "Apply on Indeed as usual and open Applied when you want to refresh statuses."
+      ],
+      "tips": [
+        "When Indeed sends you to the company site, the extension may not see the application there: add it by hand with quick add by link.",
+        "Look at the funnel by source: conversion usually differs a lot between international boards and hh.ru."
+      ]
+    }
+  },
+  "extensionInstall": {
+    "chrome": "Add to Chrome",
+    "firefox": "Add to Firefox"
+  },
   "integrations": {
     "extensionTitle": "Browser extension",
     "extensionText": "Adds applications automatically when you apply on any of 26 job boards and updates statuses when you open “My applications” on hh.ru, LinkedIn, Habr Career or Indeed. It never needs your board passwords.",
@@ -441,53 +577,6 @@
     "group_ats": "Company ATS",
     "atsHint": "ATS are the systems companies use to take applications on their own sites. When you click “Apply on company website” on LinkedIn or a careers page, the application usually lands in Greenhouse, Lever, Workable or Ashby."
   },
-  "emailImport": {
-    "title": "E-mail import",
-    "text": "Job boards e-mail you when you apply, when your application is viewed, and about invitations and rejections. Auto-forward those e-mails to your personal address and applications and statuses appear on their own — including ones sent from your phone.",
-    "disabled": "E-mail import is not configured on this server. An administrator needs to set INBOUND_EMAIL_DOMAIN and INBOUND_SECRET and deploy the Cloudflare Email Worker.",
-    "getAddress": "Get a forwarding address",
-    "yourAddress": "Your forwarding address",
-    "addressHint": "The address is random and known only to you. Mail to it is accepted only if it really comes from a job board (DKIM signature is checked).",
-    "copy": "Copy",
-    "copied": "Copied",
-    "code": "Code",
-    "confirmTitle": "Confirm forwarding",
-    "confirmText": "Your mail provider ({from}) sent a confirmation request to this address. Enter the code in its forwarding settings or open the link.",
-    "confirmLink": "Confirm forwarding",
-    "howTo": "How to set it up",
-    "yandex": "Yandex",
-    "gmail_1": "Gmail → Settings → “Forwarding and POP/IMAP” → “Add a forwarding address” → paste {address}.",
-    "gmail_2": "Gmail sends a confirmation code — it shows up here within seconds. Enter it in Gmail.",
-    "gmail_3": "Create a filter: paste the query below into “From” → “Create filter” → “Forward it to” {address}.",
-    "gmail_4": "Don’t forward all your mail — the job-board filter is enough.",
-    "yandex_1": "Yandex Mail → Settings → “Message filters” → “Create filter”.",
-    "yandex_2": "Condition: “From” contains a job-board domain (one rule per domain below, or one rule with several “or” conditions).",
-    "yandex_3": "Action: “Forward to” {address}, keep a copy.",
-    "yandex_4": "Yandex asks to confirm forwarding — the link will appear here.",
-    "mailru_1": "Mail.ru → Settings → “Filters” → “Add filter”.",
-    "mailru_2": "Condition: “From” contains a job-board domain from the list below.",
-    "mailru_3": "Action: “Forward a copy” to {address}.",
-    "mailru_4": "Mail.ru asks to confirm the address — the link or code will appear here.",
-    "copySenders": "Copy",
-    "autoForwardOnly": "Use automatic forwarding (a filter). Forwarding by hand with the “Forward” button strips the board’s signature and the e-mail will be refused.",
-    "journal": "Recent e-mails",
-    "journalEmpty": "No e-mails yet.",
-    "outcome_created": "Application added",
-    "outcome_updated": "Status updated",
-    "outcome_linked": "Linked",
-    "outcome_unchanged": "No changes",
-    "outcome_error": "Error",
-    "kind_confirmation": "Forwarding confirmation",
-    "kind_unrecognized": "Not recognized",
-    "kind_unverified": "Signature not verified",
-    "kind_ignored": "Skipped",
-    "kind_duplicate": "Duplicate",
-    "kind_unverified_hint": "The e-mail is not signed by the job board (DKIM) — it may have been forwarded by hand or forged. It was not imported.",
-    "rotate": "Change address",
-    "disable": "Turn off e-mail import",
-    "rotateConfirm": "Change the forwarding address?",
-    "rotateText": "The old address stops accepting mail immediately — update it in your forwarding settings."
-  },
   "legal": {
     "nav": "Legal documents",
     "privacy": "Privacy Policy",
@@ -507,5 +596,106 @@
     "text": "heyreply is free: no subscriptions, no ads, no feature limits. If it has been useful, you can say thanks with a donation. It is entirely voluntary and changes nothing in your account.",
     "button": "Donate",
     "hint": "Opens in a new tab on a third-party service."
+  },
+  "pagination": {
+    "nav": "Pagination",
+    "rowsPerPage": "Rows per page",
+    "showing": "{from}–{to} of {total}",
+    "prev": "Previous page",
+    "next": "Next page",
+    "page": "Page {page}",
+    "pageOf": "{page} / {pages}"
+  },
+  "landing": {
+    "navFeatures": "Features",
+    "navBoards": "Job boards",
+    "navFaq": "FAQ",
+    "navLabel": "Page sections",
+    "login": "Sign in",
+    "cta": "Get started free",
+    "kicker": "Free, with no subscriptions and no ads",
+    "title": "A job application tracker that fills itself in",
+    "text": "The Chrome and Firefox extension adds your applications from hh.ru, LinkedIn and 24 more job boards, and heyreply shows their statuses and which search strategy leads to interviews.",
+    "ctaPrimary": "Create an account",
+    "ctaSecondary": "I already have an account",
+    "note": "No job board passwords needed",
+    "stepsTitle": "How it works",
+    "steps": [
+      {
+        "t": "Install the extension",
+        "d": "For Chrome or Firefox. Connect it to your account with a token from the settings."
+      },
+      {
+        "t": "Apply as usual",
+        "d": "The application appears in heyreply on its own as soon as the board confirms it. Statuses are pulled from the board's “My applications” page."
+      },
+      {
+        "t": "See what works",
+        "d": "Funnel, sources, positions, salary ranges: what leads to interviews and where you hear nothing back."
+      }
+    ],
+    "featuresTitle": "Everything a job search needs",
+    "features": [
+      {
+        "t": "Automatic import",
+        "d": "Applications are added without typing. Adding one by hand takes about ten seconds too."
+      },
+      {
+        "t": "Statuses and history",
+        "d": "From application to offer: a table, a kanban board and a feed, with status changes by drag and drop."
+      },
+      {
+        "t": "Funnel and analytics",
+        "d": "Response, interview and offer rates by period, job board, position and city."
+      },
+      {
+        "t": "Hints from your own data",
+        "d": "Which board answers more often, whether salary range and a cover letter matter, how many applications are left hanging."
+      },
+      {
+        "t": "Your data stays yours",
+        "d": "Export to CSV and JSON at any time, and delete your account completely."
+      },
+      {
+        "t": "No job board passwords",
+        "d": "The extension runs in your browser under your own session and never sends passwords to the service."
+      }
+    ],
+    "boardsTitle": "26 job boards the extension understands",
+    "boardsText": "The extension notices new applications on every board listed. Statuses from the “My applications” page are pulled from hh.ru, Habr Career, LinkedIn and Indeed.",
+    "screensTitle": "All applications in one table",
+    "screensText": "A table, a board and a feed: filter by status, job board, work format and salary, search by company and notes, export to CSV and JSON. The screenshot shows demo data.",
+    "screenDashboardAlt": "The heyreply overview: interview conversion, number of applications, median time to a reply and the funnel by stage",
+    "screenApplicationsAlt": "The applications table in heyreply: company, position, status, source, work format and salary",
+    "faqTitle": "Frequently asked questions",
+    "faq": [
+      {
+        "q": "How much does it cost?",
+        "a": "Nothing. The service is free: no subscriptions, no ads and no feature limits. If it is useful, you can support the author with a voluntary donation."
+      },
+      {
+        "q": "Do I need my hh.ru or LinkedIn password?",
+        "a": "No. The extension runs in your browser under your own session and sends heyreply only the vacancy details and the application status."
+      },
+      {
+        "q": "Which job boards are supported?",
+        "a": "26: Russian and international job sites and the applicant tracking systems companies use (Greenhouse, Lever, Workable, Ashby). The full list is above."
+      },
+      {
+        "q": "How do I connect the extension?",
+        "a": "Install the extension for Chrome or Firefox, create a token in Settings → Integrations and paste it into the extension together with the address of the service."
+      },
+      {
+        "q": "What if my job board is not on the list?",
+        "a": "Add the application by hand: company, position and status take about ten seconds. Statistics are calculated exactly as for imported applications."
+      },
+      {
+        "q": "Where is my data stored, and can I take it with me?",
+        "a": "Your data is kept on the heyreply server and is visible only to you. You can export it to CSV or JSON and delete the account entirely. See the privacy policy for details."
+      }
+    ],
+    "bottomTitle": "Start tracking today",
+    "bottomText": "Signing up takes a minute and costs nothing.",
+    "ctaShort": "Sign up"
   }
 }

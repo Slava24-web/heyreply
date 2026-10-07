@@ -3,11 +3,10 @@ import { PrismaService } from '../prisma/prisma.service';
 import { config } from '../config';
 
 const DAY = 86_400_000;
-/** Retention periods promised in the privacy policy (section 9) */
+/** Retention periods promised in the privacy policy (section 8) */
 export const RETENTION = {
   deletedApplicationsDays: 30,
   deadSessionsDays: 7,
-  inboundJournalDays: 90,
   revokedCredentialsDays: 30,
 } as const;
 
@@ -38,13 +37,11 @@ export class RetentionService implements OnModuleInit, OnModuleDestroy {
     const sessions = (
       await this.prisma.session.deleteMany({ where: { OR: [{ expiresAt: { lt: now } }, { revokedAt: { lt: ago(RETENTION.deadSessionsDays) } }] } })
     ).count;
-    const inboundEmails = (await this.prisma.inboundEmail.deleteMany({ where: { receivedAt: { lt: ago(RETENTION.inboundJournalDays) } } })).count;
     const apiTokens = (await this.prisma.apiToken.deleteMany({ where: { revokedAt: { lt: ago(RETENTION.revokedCredentialsDays) } } })).count;
-    const inboundAddresses = (await this.prisma.inboundAddress.deleteMany({ where: { revokedAt: { lt: ago(RETENTION.revokedCredentialsDays) } } })).count;
     const resetTokens = (
       await this.prisma.user.updateMany({ where: { resetTokenHash: { not: null }, resetTokenExpires: { lt: now } }, data: { resetTokenHash: null, resetTokenExpires: null } })
     ).count;
-    const result = { applications, sessions, inboundEmails, apiTokens, inboundAddresses, resetTokens };
+    const result = { applications, sessions, apiTokens, resetTokens };
     if (Object.values(result).some(Boolean)) this.logger.log(`Retention: ${JSON.stringify(result)}`);
     return result;
   }

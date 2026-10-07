@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Sidebar } from '@/components/shell/sidebar';
 import { Topbar } from '@/components/shell/topbar';
 import { MobileNav } from '@/components/shell/mobile-nav';
@@ -5,15 +6,21 @@ import { CommandPalette } from '@/components/shell/command-palette';
 import { ConsentGate } from '@/components/legal/consent-gate';
 import { AuthGate } from '@/components/shell/auth-gate';
 import { DonateProvider } from '@/components/shell/donate';
+import { ExtensionStoresProvider } from '@/components/extension-install';
 import { getDonateUrl } from '@/lib/donate';
+import { getExtensionStores } from '@/lib/extension-stores';
 import { UIProvider } from '@/components/shell/ui-context';
 import { ThemeSync } from '@/components/shell/theme-sync';
 import { QuickAddSheet } from '@/components/applications/quick-add';
 import { ApplicationSheet } from '@/components/applications/application-sheet';
 
+// The signed-in app is private: keep it out of search results even if a crawler ever gets past the sign-in redirect
+export const metadata: Metadata = { robots: { index: false, follow: false } };
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <DonateProvider url={getDonateUrl()}>
+    <ExtensionStoresProvider stores={getExtensionStores()}>
     <UIProvider>
       <AuthGate>
       <ThemeSync />
@@ -31,6 +38,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <CommandPalette />
       </AuthGate>
     </UIProvider>
+    </ExtensionStoresProvider>
     </DonateProvider>
   );
 }

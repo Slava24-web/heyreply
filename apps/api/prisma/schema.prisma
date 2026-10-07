@@ -67,8 +67,6 @@ model User {
   sessions     Session[]
   apiTokens    ApiToken[]
   deletedImports   DeletedImport[]
-  inboundAddresses InboundAddress[]
-  inboundEmails    InboundEmail[]
   applications Application[]
   companies    Company[]
   positions    Position[]
@@ -111,39 +109,6 @@ model ApiToken {
   @@index([userId])
 }
 
-/// Personal forwarding address for e-mail import: <localPart>@<INBOUND_EMAIL_DOMAIN>. The random local part is the secret.
-model InboundAddress {
-  id        String    @id @default(uuid())
-  userId    String
-  localPart String    @unique
-  createdAt DateTime  @default(now())
-  revokedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-/// Journal of received e-mails — metadata only, the message body is never stored.
-model InboundEmail {
-  id            String   @id @default(uuid())
-  userId        String
-  messageIdHash String
-  fromAddress   String
-  subject       String
-  platform      String?
-  /// application | confirmation | unrecognized | unverified | ignored
-  kind          String
-  /// created | updated | unchanged | linked | error (for kind=application)
-  outcome       String?
-  /// Mailbox forwarding confirmation (Gmail, Yandex, Mail.ru): link + code shown to the user
-  confirmUrl    String?
-  confirmCode   String?
-  receivedAt    DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, messageIdHash])
-  @@index([userId, receivedAt])
-}
 
 model Company {
   id             String        @id @default(uuid())

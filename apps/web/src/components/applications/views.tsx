@@ -1,14 +1,13 @@
 'use client';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import { ArrowDown, ArrowUp, Clock, MapPin } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import type { ApplicationDto, AppStatus } from '@heyreply/shared';
 import { useFormat } from '@/lib/format';
 import { useChangeStatus, useMe } from '@/lib/queries';
 import { STATUS_META } from '@/lib/status';
 import { cn } from '@/lib/utils';
-import { useUI } from '@/components/shell/ui-context';
+import { useUIActions } from '@/components/shell/ui-context';
 import { CompanyAvatar } from './company-avatar';
 import { StatusBadge, StatusPicker } from './status-badge';
 
@@ -28,12 +27,16 @@ export const ALL_COLUMNS: { key: ColumnKey; sort?: string; width: string; defaul
   { key: 'tags', width: 'minmax(120px,0.8fr)', defaultOn: false },
 ];
 
-function Cell({ col, a }: { col: ColumnKey; a: ApplicationDto }) {
-  const f = useFormat();
-  const tf = useTranslations('format');
-  const tl = useTranslations('list');
-  const change = useChangeStatus();
-  const { data: me } = useMe();
+/** Everything a cell needs from hooks, resolved once per table instead of once per cell. */
+interface CellCtx {
+  f: ReturnType<typeof useFormat>;
+  tf: ReturnType<typeof useTranslations<'format'>>;
+  tl: ReturnType<typeof useTranslations<'list'>>;
+  ghostingDays: number;
+  changeStatus: (v: { id: string; status: AppStatus }) => void;
+}
+
+function renderCell(col: ColumnKey, a: ApplicationDto, { f, tf, tl, ghostingDays, changeStatus }: CellCtx) {
   switch (col) {
     case 'appliedAt':
       return <span className="text-[13px] text-muted tabular">{f.date(a.appliedAt)}</span>;
@@ -49,7 +52,7 @@ function Cell({ col, a }: { col: ColumnKey; a: ApplicationDto }) {
     case 'status':
       return (
         <span onClick={(e) => e.stopPropagation()}>
-          <StatusPicker value={a.status} onChange={(s) => change.mutate({ id: a.id, status: s })}>
+          <StatusPicker value={a.status} onChange={(s) => changeStatus({ id: a.id, status: s })}>
             <button className="rounded-full transition-transform hover:scale-[1.03]">
               <StatusBadge status={a.status} withChevron />
             </button>
@@ -66,7 +69,7 @@ function Cell({ col, a }: { col: ColumnKey; a: ApplicationDto }) {
       return <span className="truncate text-[13px] tabular">{f.salary(a.salaryFrom, a.salaryTo, a.currency) ?? <span className="text-subtle">—</span>}</span>;
     case 'waiting':
       return a.daysWaiting != null ? (
-        <span className={cn('text-[13px] tabular', a.daysWaiting > (me?.ghostingDays ?? 14) ? 'font-medium text-accent' : 'text-muted')}>{tl('daysShort', { count: a.daysWaiting })}</span>
+        <span className={cn('text-[13px] tabular', a.daysWaiting > ghostingDays ? 'font-medium text-accent' : 'text-muted')}>{tl('daysShort', { count: a.daysWaiting })}</span>
       ) : (
         <span className="text-subtle">—</span>
       );
@@ -84,6 +87,43 @@ function Cell({ col, a }: { col: ColumnKey; a: ApplicationDto }) {
       );
   }
 }
+
+interface RowProps {
+  a: ApplicationDto;
+  cols: typeof ALL_COLUMNS;
+  template: string;
+  height: number;
+  on: boolean;
+  ctx: CellCtx;
+  onOpen: (id: string) => void;
+  onSelect: (ids: string[], on: boolean) => void;
+}
+
+/** Memoized: a sheet opening or one row being selected must not re-render the other hundreds of rows. */
+const Row = memo(function Row({ a, cols, template, height, on, ctx, onOpen, onSelect }: RowProps) {
+  return (
+    <div
+      role="row"
+      onClick={() => onOpen(a.id)}
+      onKeyDown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onOpen(a.id)}
+      tabIndex={0}
+      className={cn(
+        'group grid cursor-pointer items-center border-b border-border/70 text-sm transition-colors last:border-b-0 hover:bg-surface-2/70 focus-visible:bg-surface-2 focus-visible:outline-none',
+        on && 'bg-primary-soft/50 hover:bg-primary-soft/70',
+      )}
+      style={{ gridTemplateColumns: template, height }}
+    >
+      <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
+        <input type="checkbox" aria-label="Select" className="size-4 accent-[var(--primary)]" checked={on} onChange={(e) => onSelect([a.id], e.target.checked)} />
+      </div>
+      {cols.map((c) => (
+        <div role="cell" key={c.key} className="flex min-w-0 items-center px-3">
+          {renderCell(c.key, a, ctx)}
+        </div>
+      ))}
+    </div>
+  );
+});
 
 export function TableView({
   items,
@@ -103,17 +143,18 @@ export function TableView({
   compact: boolean;
 }) {
   const t = useTranslations('list.col');
-  const { openApp } = useUI();
-  const cols = ALL_COLUMNS.filter((c) => columns.includes(c.key));
+  const { openApp } = useUIActions();
+  const f = useFormat();
+  const tf = useTranslations('format');
+  const tl = useTranslations('list');
+  const { data: me } = useMe();
+  const { mutate: changeStatus } = useChangeStatus();
+  const ghostingDays = me?.ghostingDays ?? 14;
+  const ctx = useMemo<CellCtx>(() => ({ f, tf, tl, ghostingDays, changeStatus }), [f, tf, tl, ghostingDays, changeStatus]);
+  const cols = useMemo(() => ALL_COLUMNS.filter((c) => columns.includes(c.key)), [columns]);
   const template = `44px ${cols.map((c) => c.width).join(' ')}`;
   const rowH = compact ? 44 : 56;
-  const listRef = useRef<HTMLDivElement>(null);
-  const [offset, setOffset] = useState(0);
-  useEffect(() => setOffset(listRef.current?.offsetTop ?? 0), []);
-  const virtual = items.length > 150;
-  const v = useWindowVirtualizer({ count: items.length, estimateSize: () => rowH, overscan: 12, scrollMargin: offset, enabled: virtual });
   const allOn = items.length > 0 && items.every((a) => selected.has(a.id));
-  const rows = virtual ? v.getVirtualItems() : items.map((_, index) => ({ index, start: index * rowH, key: index }));
 
   return (
     <div className="card-glass scrollbar-thin overflow-x-auto rounded-card border">
@@ -139,38 +180,10 @@ export function TableView({
             );
           })}
         </div>
-        <div ref={listRef} style={virtual ? { height: v.getTotalSize(), position: 'relative' } : undefined}>
-          {rows.map((r) => {
-            const a = items[r.index];
-            const on = selected.has(a.id);
-            return (
-              <div
-                role="row"
-                key={a.id}
-                onClick={() => openApp(a.id)}
-                onKeyDown={(e) => e.key === 'Enter' && e.target === e.currentTarget && openApp(a.id)}
-                tabIndex={0}
-                className={cn(
-                  'group grid cursor-pointer items-center border-b border-border/70 text-sm transition-colors last:border-b-0 hover:bg-surface-2/70 focus-visible:bg-surface-2 focus-visible:outline-none',
-                  on && 'bg-primary-soft/50 hover:bg-primary-soft/70',
-                )}
-                style={{
-                  gridTemplateColumns: template,
-                  height: rowH,
-                  ...(virtual ? { position: 'absolute', top: 0, left: 0, right: 0, transform: `translateY(${r.start - v.options.scrollMargin}px)` } : {}),
-                }}
-              >
-                <div className="flex justify-center" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" aria-label="Select" className="size-4 accent-[var(--primary)]" checked={on} onChange={(e) => onSelect([a.id], e.target.checked)} />
-                </div>
-                {cols.map((c) => (
-                  <div role="cell" key={c.key} className="flex min-w-0 items-center px-3">
-                    <Cell col={c.key} a={a} />
-                  </div>
-                ))}
-              </div>
-            );
-          })}
+        <div>
+          {items.map((a) => (
+            <Row key={a.id} a={a} cols={cols} template={template} height={rowH} on={selected.has(a.id)} ctx={ctx} onOpen={openApp} onSelect={onSelect} />
+          ))}
         </div>
       </div>
     </div>
@@ -182,7 +195,7 @@ const KANBAN: AppStatus[] = ['APPLIED', 'VIEWED', 'SCREENING', 'TEST_TASK', 'INT
 export function KanbanView({ items }: { items: ApplicationDto[] }) {
   const ts = useTranslations('status');
   const f = useFormat();
-  const { openApp } = useUI();
+  const { openApp } = useUIActions();
   const change = useChangeStatus();
   const [over, setOver] = useState<AppStatus | null>(null);
   return (
@@ -242,7 +255,7 @@ export function KanbanView({ items }: { items: ApplicationDto[] }) {
 export function FeedView({ items }: { items: ApplicationDto[] }) {
   const f = useFormat();
   const tl = useTranslations('list');
-  const { openApp } = useUI();
+  const { openApp } = useUIActions();
   return (
     <ul className="flex flex-col gap-2">
       {items.map((a) => (

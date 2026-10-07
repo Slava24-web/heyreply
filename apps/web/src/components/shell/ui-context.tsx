@@ -1,20 +1,25 @@
 'use client';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { CreateApplicationInput } from '@heyreply/shared';
 
 interface UIState {
   quickAddOpen: boolean;
   quickAddPrefill: Partial<CreateApplicationInput> | null;
+  appId: string | null;
+  paletteOpen: boolean;
+}
+
+/** Stable for the lifetime of the provider: components that only open things don't re-render when a sheet opens or closes. */
+interface UIActions {
   openQuickAdd: (prefill?: Partial<CreateApplicationInput>) => void;
   closeQuickAdd: () => void;
-  appId: string | null;
   openApp: (id: string) => void;
   closeApp: () => void;
-  paletteOpen: boolean;
   setPaletteOpen: (v: boolean) => void;
 }
 
-const Ctx = createContext<UIState | null>(null);
+const StateCtx = createContext<UIState | null>(null);
+const ActionsCtx = createContext<UIActions | null>(null);
 
 export function UIProvider({ children }: { children: React.ReactNode }) {
   const [quickAddOpen, setQuickAddOpen] = useState(false);
@@ -22,10 +27,20 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
   const [appId, setAppId] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
-  const openQuickAdd = useCallback((prefill?: Partial<CreateApplicationInput>) => {
-    setPrefill(prefill ?? null);
-    setQuickAddOpen(true);
-  }, []);
+  const actions = useMemo<UIActions>(
+    () => ({
+      openQuickAdd: (prefill) => {
+        setPrefill(prefill ?? null);
+        setQuickAddOpen(true);
+      },
+      closeQuickAdd: () => setQuickAddOpen(false),
+      openApp: setAppId,
+      closeApp: () => setAppId(null),
+      setPaletteOpen,
+    }),
+    [],
+  );
+  const { openQuickAdd } = actions;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -47,25 +62,25 @@ export function UIProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [openQuickAdd]);
 
-  const value = useMemo<UIState>(
-    () => ({
-      quickAddOpen,
-      quickAddPrefill,
-      openQuickAdd,
-      closeQuickAdd: () => setQuickAddOpen(false),
-      appId,
-      openApp: setAppId,
-      closeApp: () => setAppId(null),
-      paletteOpen,
-      setPaletteOpen,
-    }),
-    [quickAddOpen, quickAddPrefill, openQuickAdd, appId, paletteOpen],
+  const state = useMemo<UIState>(() => ({ quickAddOpen, quickAddPrefill, appId, paletteOpen }), [quickAddOpen, quickAddPrefill, appId, paletteOpen]);
+  return (
+    <ActionsCtx.Provider value={actions}>
+      <StateCtx.Provider value={state}>{children}</StateCtx.Provider>
+    </ActionsCtx.Provider>
   );
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-export function useUI() {
-  const v = useContext(Ctx);
-  if (!v) throw new Error('useUI outside UIProvider');
+/** For components that only trigger things (open a sheet, open the palette). */
+export function useUIActions() {
+  const v = useContext(ActionsCtx);
+  if (!v) throw new Error('useUIActions outside UIProvider');
   return v;
+}
+
+/** For the components that render the sheets and the palette, and need to know whether they are open. */
+export function useUI() {
+  const state = useContext(StateCtx);
+  const actions = useContext(ActionsCtx);
+  if (!state || !actions) throw new Error('useUI outside UIProvider');
+  return { ...state, ...actions };
 }

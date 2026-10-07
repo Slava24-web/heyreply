@@ -76,13 +76,10 @@ describe('data retention and export (e2e)', () => {
     expect(fresh.items).toEqual(['created']);
   });
 
-  it('drops dead sessions, stale journal entries and spent credentials', async () => {
+  it('drops dead sessions and spent credentials', async () => {
     const expired = await prisma.session.create({ data: { userId, refreshTokenHash: 'x', expiresAt: daysAgo(1), ip: '10.0.0.1' } });
     const revoked = await prisma.session.create({ data: { userId, refreshTokenHash: 'y', expiresAt: new Date(Date.now() + DAY), revokedAt: daysAgo(8) } });
     const justRevoked = await prisma.session.create({ data: { userId, refreshTokenHash: 'z', expiresAt: new Date(Date.now() + DAY), revokedAt: daysAgo(1) } });
-    const mail = { userId, fromAddress: 'a@hh.ru', subject: 's', kind: 'ignored' };
-    await prisma.inboundEmail.create({ data: { ...mail, messageIdHash: 'old', receivedAt: daysAgo(91) } });
-    await prisma.inboundEmail.create({ data: { ...mail, messageIdHash: 'new', receivedAt: daysAgo(10) } });
     await prisma.apiToken.create({ data: { userId, name: 'old', tokenHash: `h-${stamp}`, prefix: 'otk_x', revokedAt: daysAgo(31) } });
     await prisma.user.update({ where: { id: userId }, data: { resetTokenHash: 'r', resetTokenExpires: daysAgo(1) } });
 
@@ -92,7 +89,6 @@ describe('data retention and export (e2e)', () => {
     expect(ids).not.toContain(expired.id);
     expect(ids).not.toContain(revoked.id);
     expect(ids).toContain(justRevoked.id);
-    expect((await prisma.inboundEmail.findMany({ where: { userId } })).map((e) => e.messageIdHash)).toEqual(['new']);
     expect(await prisma.apiToken.count({ where: { userId } })).toBe(0);
     expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).resetTokenHash).toBeNull();
   });
@@ -113,14 +109,13 @@ describe('data retention and export (e2e)', () => {
     const archived = await prisma.application.create({ data: { ...base, archivedAt: daysAgo(2) } });
     const r = await request(app.getHttpServer()).get('/api/v1/me/export').set('Cookie', jar).expect(200);
     expect(Object.keys(r.body)).toEqual(
-      expect.arrayContaining(['profile', 'consent', 'applications', 'dictionaries', 'sessions', 'integrationTokens', 'emailImport']),
+      expect.arrayContaining(['profile', 'consent', 'applications', 'dictionaries', 'sessions', 'integrationTokens']),
     );
     const byId = new Map<string, { deletedAt: string | null; archivedAt: string | null }>(r.body.applications.map((a: { id: string }) => [a.id, a]));
     expect(byId.get(archived.id)?.archivedAt).not.toBeNull();
     expect([...byId.values()].some((a) => a.deletedAt)).toBe(true);
     expect(r.body.consent.documentsVersion).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(r.body.dictionaries.companies.map((c: { name: string }) => c.name)).toEqual(['Acme', 'Other']);
-    expect(r.body.emailImport.journal).toHaveLength(1);
     expect(JSON.stringify(r.body)).not.toMatch(/refreshTokenHash|tokenHash|passwordHash/);
   });
 });

@@ -19,7 +19,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
       <aside className="hero-gradient relative hidden overflow-hidden lg:flex lg:flex-col lg:justify-between lg:p-12">
         <Logo />
         <div className="max-w-[520px]">
-          <h1 className="font-display text-[clamp(40px,4.4vw,64px)] leading-[1.02] font-medium tracking-[-0.03em] text-text">{t('auth.heroTitle')}</h1>
+          <p className="font-display text-[clamp(40px,4.4vw,64px)] leading-[1.02] font-medium tracking-[-0.03em] text-text">{t('auth.heroTitle')}</p>
           <p className="mt-6 max-w-[420px] text-[17px] leading-relaxed text-muted">{t('auth.heroText')}</p>
         </div>
         <div className="rounded-panel border border-white/40 bg-surface/70 p-6 backdrop-blur-md dark:border-white/5" aria-hidden>

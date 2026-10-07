@@ -27,6 +27,8 @@ const ru = {
   e_BAD_TOKEN: 'Токен недействителен или отозван — создайте новый.',
   e_NO_TOKEN: 'Расширение не подключено к аккаунту.',
   e_NETWORK: 'Сервер недоступен — отклики сохранены и будут отправлены позже.',
+  e_RATE_LIMIT: 'Слишком много запросов — расширение повторит отправку чуть позже.',
+  e_REJECTED: 'Сервер не принял данные — проверьте адрес heyreply; отклики сохранены и будут отправлены повторно.',
   e_PERMISSION: 'Нужно разрешение на доступ к адресу сервера.',
   e_URL: 'Некорректный адрес.',
   disclosure:
@@ -63,6 +65,8 @@ const en: typeof ru = {
   e_BAD_TOKEN: 'The token is invalid or revoked — create a new one.',
   e_NO_TOKEN: 'The extension is not connected to an account.',
   e_NETWORK: 'Server unreachable — applications are kept and will be sent later.',
+  e_RATE_LIMIT: 'Too many requests — the extension will retry shortly.',
+  e_REJECTED: 'The server did not accept the data — check the heyreply address; applications are kept and will be resent.',
   e_PERMISSION: 'Permission to reach the server address is required.',
   e_URL: 'Invalid address.',
   disclosure:

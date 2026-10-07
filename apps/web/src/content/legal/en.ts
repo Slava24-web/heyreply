@@ -10,23 +10,22 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         title: '1. Who we are and what this policy covers',
         paragraphs: [
           `The controller of your personal data is ${who(o)}. Contact for data questions: ${o.email}.`,
-          'This policy explains what data we process when you use the heyreply web app, the browser extension and e-mail import, why, for how long, and what rights you have. It applies together with the Terms of Service and the Consent to Personal Data Processing.',
+          'This policy explains what data we process when you use the heyreply web app, the browser extension, why, for how long, and what rights you have. It applies together with the Terms of Service and the Consent to Personal Data Processing.',
         ],
       },
       {
         title: '2. What data we process',
         list: [
           'Account: name, e-mail address, password hash (we never store the password itself), interface language, theme, currency and other settings.',
-          'Your applications: company, position, job board, city, work format, vacancy link, salary range and offer, dates, statuses and their history, tags, rejection reasons and notes. You enter them yourself, or the extension and e-mail import add them on your behalf.',
+          'Your applications: company, position, job board, city, work format, vacancy link, salary range and offer, dates, statuses and their history, tags, rejection reasons and notes. You enter them yourself, or the extension adds them on your behalf.',
           'Sessions and security: IP address and user-agent of your devices, sign-in and last-activity time, hashes of session tokens and integration tokens.',
-          'E-mail import: sender address and subject of each message, the detected board and the processing result, plus the forwarding confirmation link and code if a mail provider sent one. We do not store the message body.',
           'Third-party data you enter yourself or that appears in job-board e-mails (for example a recruiter’s name in a subject line). Enter it only to the extent you need it to track your applications.',
         ],
       },
       {
         title: '3. Why we process it, and on what basis',
         list: [
-          'Providing the service (application tracking, statistics, extension, e-mail import): performance of the Terms of Service and your consent.',
+          'Providing the service (application tracking, statistics, extension): performance of the Terms of Service and your consent.',
           'Security (brute-force protection, your device list, incident investigation): our legitimate interest in protecting the data.',
           'Complying with the law and answering your requests.',
         ],
@@ -43,57 +42,50 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         ],
       },
       {
-        title: '5. E-mail import',
-        paragraphs: [
-          'If you enable import, we give you a personal forwarding address. Cloudflare’s mail service receives the job-board e-mails you forward to it and passes them to our server, where we verify the sender’s signature, detect the board and, if the message is recognised, create or update an application. Mail from other senders is discarded. The message body is not stored; only the sender and subject remain in the log.',
-          'The import log is visible only to you, and you can switch the forwarding address off at any time.',
-        ],
-      },
-      {
-        title: '6. Cookies and local storage',
+        title: '5. Cookies and local storage',
         paragraphs: ['We use strictly necessary cookies and local storage only. They are needed to run the service, so no consent is required for them. There are no advertising or analytics cookies.'],
         list: [
           'access_token (httpOnly): access to your account, up to 15 minutes.',
           'refresh_token (httpOnly): session renewal, up to 30 days.',
           'has_session: marks that you are signed in, up to 30 days.',
+          'access_ok: marks that the access token is still valid, so the app knows when to renew it, up to 15 minutes.',
           'NEXT_LOCALE: your chosen interface language.',
           'Browser local storage: view preferences and the draft of the new-application form; cleared when you sign out.',
         ],
       },
       {
-        title: '7. Who receives your data',
+        title: '6. Who receives your data',
         paragraphs: ['We share data only with the infrastructure providers needed to run the service, under terms that require them to protect it and use it only on our instructions:'],
         list: [
           `Hosting provider (servers and database): ${o.hosting}.`,
-          'Cloudflare, Inc. (USA): receiving and forwarding e-mails sent to the import address (Email Routing and Workers) and storing encrypted database backups (R2), where these features are enabled.',
+          'Cloudflare, Inc. (USA): storing encrypted database backups (R2), where this feature is enabled.',
           'E-mail delivery provider (SMTP): sending the password-reset link to your e-mail address, where this feature is enabled.',
         ],
       },
       {
-        title: '8. International transfers',
+        title: '7. International transfers',
         paragraphs: [
-          'The Operator is based in the Republic of Serbia and the service is open to users from many countries. The providers in section 7 may be located in, or process data in, countries other than yours, including countries whose data-protection level differs from that of Russia, Serbia or the EU. We transfer only what the service needs and use contractual safeguards (including standard contractual clauses) where the law requires. For users in Russia and in other countries where this is required, the transfer is based on your consent.',
+          'The Operator is based in the Republic of Serbia and the service is open to users from many countries. The providers in section 6 may be located in, or process data in, countries other than yours, including countries whose data-protection level differs from that of Russia, Serbia or the EU. We transfer only what the service needs and use contractual safeguards (including standard contractual clauses) where the law requires. For users in Russia and in other countries where this is required, the transfer is based on your consent.',
           'We apply the same rules to all users. We follow Serbian data-protection law and the GDPR and, where applicable, the laws of the user’s country. Some countries’ laws (for example data-localisation rules) may require data to be stored differently; we deliberately do not host data separately for each country, and access to the service may therefore be restricted in such a country.',
         ],
       },
       {
-        title: '9. How long we keep data',
+        title: '8. How long we keep data',
         list: [
           'Account and application data: while you have an account. When you delete your account it is removed from the live database immediately.',
-          'Applications you delete are kept for 30 days so that they can be restored, then removed permanently. For applications imported by the extension or from e-mail, only the vacancy ID on the board remains, so the vacancy is not added again.',
-          'Sessions: ended and expired sessions are deleted within 7 days; an active session lasts up to 30 days. Revoked integration tokens and forwarding addresses are deleted after 30 days.',
-          'E-mail import log: at most 90 days and 200 entries per user.',
+          'Applications you delete are kept for 30 days so that they can be restored, then removed permanently. For applications imported by the extension, only the vacancy ID on the board remains, so the vacancy is not added again.',
+          'Sessions: ended and expired sessions are deleted within 7 days; an active session lasts up to 30 days. Revoked integration tokens are deleted after 30 days.',
           'Backups: kept encrypted for up to 30 days. Data of a deleted account disappears from backups when that period ends; if we restore from a backup we re-apply deletions.',
         ],
       },
       {
-        title: '10. How we protect data',
+        title: '9. How we protect data',
         paragraphs: [
           'We use technical and organisational measures: encrypted connections (HTTPS), passwords stored only as argon2id hashes, tokens stored only as hashes, httpOnly cookies, protection against password guessing and request forgery, isolation of users’ data, and restricted server access. If a breach affects your rights, we will tell you and the competent authorities within the time limits set by law.',
         ],
       },
       {
-        title: '11. Your rights',
+        title: '10. Your rights',
         list: [
           'Know what data we process and get a copy: “Settings → Export data”.',
           'Correct your data: in your profile and in the applications themselves.',
@@ -105,11 +97,11 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         paragraphs: ['We answer requests within the time set by law: up to 10 working days in Russia, up to one month in the EU and Serbia.'],
       },
       {
-        title: '12. Age',
+        title: '11. Age',
         paragraphs: ['The service is intended for people aged 16 and over. We do not knowingly collect data of younger children; if you learn of such a case, write to us and we will delete the data.'],
       },
       {
-        title: '13. Changes to this policy',
+        title: '12. Changes to this policy',
         paragraphs: ['If we change the policy materially we will show a notice in the service and, where needed, ask for consent again. The edition date is shown at the top of the page.'],
       },
     ],
@@ -121,7 +113,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
       {
         title: '1. General',
         paragraphs: [
-          `These terms are an agreement between ${who(o)} and you as a user of heyreply: a web app for tracking job applications, a browser extension and e-mail import (the “Service”). By registering you accept these terms and the Privacy Policy.`,
+          `These terms are an agreement between ${who(o)} and you as a user of heyreply: a web app for tracking job applications, a browser extension (the “Service”). By registering you accept these terms and the Privacy Policy.`,
           'The Service is free: no subscriptions, no ads, no paid features. The author may accept voluntary donations through a third-party service. A donation is not a payment for the Service, gives the user nothing in the Service, creates no obligation as to availability or quality, and is non-refundable.',
         ],
       },
@@ -136,7 +128,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
       {
         title: '3. What the Service does',
         paragraphs: [
-          'The Service helps you keep track of your applications and shows statistics. It is not an intermediary between you and employers, does not apply on your behalf, does not guarantee employment and does not vet vacancies or employers. Statistics are built from data entered by you, the extension or e-mail import, and may be inaccurate.',
+          'The Service helps you keep track of your applications and shows statistics. It is not an intermediary between you and employers, does not apply on your behalf, does not guarantee employment and does not vet vacancies or employers. Statistics are built from data entered by you or the extension, and may be inaccurate.',
         ],
       },
       {
@@ -206,13 +198,13 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
       {
         title: 'What data',
         paragraphs: [
-          'Name, e-mail address, password hash, account settings, IP address and user-agent of my devices, details of my job applications (company, position, job board, location, salary expectations and offers, dates, statuses, notes, tags), metadata of e-mails I forward to the import address (sender, subject), and third-party data that I enter into the Service myself.',
+          'Name, e-mail address, password hash, account settings, IP address and user-agent of my devices, details of my job applications (company, position, job board, location, salary expectations and offers, dates, statuses, notes, tags), and third-party data that I enter into the Service myself.',
         ],
       },
       {
         title: 'Purposes',
         list: [
-          'giving me access to the Service and its features (application tracking, statistics, extension, e-mail import);',
+          'giving me access to the Service and its features (application tracking, statistics, extension);',
           'keeping my account and the Service secure;',
           'contacting me about the Service and my requests;',
           'complying with the law.',
@@ -228,7 +220,7 @@ export const en: Record<LegalDocKey, (o: Operator) => LegalDoc> = {
         title: 'Processors and international transfer',
         list: [
           `Hosting provider: ${o.hosting}.`,
-          'Cloudflare, Inc. (USA): receiving and forwarding e-mails to the import address, storing backups.',
+          'Cloudflare, Inc. (USA): storing backups.',
         ],
         paragraphs: [
           'I understand that these persons may be located and process data outside the Russian Federation, including in countries that do not ensure adequate protection of data subjects’ rights, and I consent to such cross-border transfer to the extent needed to run the Service.',

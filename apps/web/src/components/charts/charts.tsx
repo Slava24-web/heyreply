@@ -7,6 +7,7 @@ import { useFormat } from '@/lib/format';
 import { STAGE_LABEL_KEYS, STATUS_META } from '@/lib/status';
 import { cn } from '@/lib/utils';
 import { LowSample } from '@/components/ui/card';
+import { clampPage, Pagination, usePageSize } from '@/components/ui/pagination';
 
 const axisTick = { fill: 'var(--text-subtle)', fontSize: 11 };
 
@@ -259,7 +260,12 @@ export function SegmentTable({ rows, noneLabel }: { rows: SegmentRowDto[]; noneL
   const tc = useTranslations('common');
   const f = useFormat();
   const [sort, setSort] = useState<keyof SegmentRowDto>('total');
+  const [pageSize, setPageSize] = usePageSize();
+  const [page, setPage] = useState(1);
   const sorted = [...rows].sort((a, b) => (b[sort] as number) - (a[sort] as number));
+  // Derived, so a shorter list (another period) can never leave the table on a page that no longer exists
+  const current = clampPage(page, sorted.length, pageSize);
+  const visible = sorted.slice((current - 1) * pageSize, current * pageSize);
   const cols: { key: keyof SegmentRowDto; label: string; pct?: boolean }[] = [
     { key: 'total', label: t('applications') },
     { key: 'responseRate', label: t('responseRate'), pct: true },
@@ -275,7 +281,13 @@ export function SegmentTable({ rows, noneLabel }: { rows: SegmentRowDto[]; noneL
             <th className="py-2.5 pr-3 font-medium">{t('name')}</th>
             {cols.map((c) => (
               <th key={c.key} className="px-3 py-2.5 text-right font-medium">
-                <button onClick={() => setSort(c.key)} className={cn('hover:text-text', sort === c.key && 'text-text')}>
+                <button
+                  onClick={() => {
+                    setSort(c.key);
+                    setPage(1);
+                  }}
+                  className={cn('hover:text-text', sort === c.key && 'text-text')}
+                >
                   {c.label}
                   {sort === c.key ? ' ↓' : ''}
                 </button>
@@ -284,7 +296,7 @@ export function SegmentTable({ rows, noneLabel }: { rows: SegmentRowDto[]; noneL
           </tr>
         </thead>
         <tbody>
-          {sorted.map((r) => (
+          {visible.map((r) => (
             <tr key={r.key} className={cn('border-b border-border/60 last:border-0', r.lowSample && 'text-subtle')}>
               <td className="py-2.5 pr-3">
                 <span className="flex items-center gap-2">
@@ -305,6 +317,7 @@ export function SegmentTable({ rows, noneLabel }: { rows: SegmentRowDto[]; noneL
           ))}
         </tbody>
       </table>
+      <Pagination compact className="mt-4" page={current} pageSize={pageSize} total={sorted.length} onPageChange={setPage} onPageSizeChange={setPageSize} />
     </div>
   );
 }

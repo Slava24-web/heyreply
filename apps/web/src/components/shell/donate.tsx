@@ -3,7 +3,8 @@ import { Heart } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createContext, useContext } from 'react';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Tip } from '@/components/ui/popover';
+import { navItemClass } from './nav-style';
 
 const DonateContext = createContext<string | null>(null);
 
@@ -37,16 +38,17 @@ export function DonateNavLink({ collapsed }: { collapsed: boolean }) {
   const t = useTranslations('donate');
   const url = useDonateUrl();
   if (!url) return null;
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={t('short')}
-      className={cn('flex h-9 items-center gap-3 rounded-field px-3 text-[13px] text-subtle hover:text-text', collapsed && 'justify-center px-0')}
-    >
-      <Heart className="size-[18px]" />
-      {collapsed ? null : t('short')}
+  const link = (
+    <a href={url} target="_blank" rel="noopener noreferrer" aria-label={t('short')} className={navItemClass(false, collapsed)}>
+      <Heart className="size-[18px] shrink-0" />
+      {collapsed ? null : <span className="truncate">{t('short')}</span>}
     </a>
+  );
+  return collapsed ? (
+    <Tip content={t('short')} side="right">
+      {link}
+    </Tip>
+  ) : (
+    link
   );
 }

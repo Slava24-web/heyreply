@@ -3,12 +3,12 @@ import { BarChart3, LayoutDashboard, ListChecks, Plus, Settings } from 'lucide-r
 import { useTranslations } from 'next-intl';
 import { Link, usePathname } from '@/i18n/navigation';
 import { cn } from '@/lib/utils';
-import { useUI } from './ui-context';
+import { useUIActions } from './ui-context';
 
 export function MobileNav() {
   const t = useTranslations('nav');
   const pathname = usePathname();
-  const { openQuickAdd } = useUI();
+  const { openQuickAdd } = useUIActions();
   const items = [
     { href: '/dashboard', label: t('overview'), icon: LayoutDashboard },
     { href: '/applications', label: t('applications'), icon: ListChecks },

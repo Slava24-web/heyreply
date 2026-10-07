@@ -1,8 +1,20 @@
 import type { Adapter, Observed } from '../types';
 import { cleanCompanyName } from '@heyreply/shared/dist/enums';
+import { appliedDateFromText } from './dates';
 import { statusFromText } from './status';
 
 const clean = (s: string | null | undefined) => (s ?? '').replace(/\s+/g, ' ').trim();
+
+/** Card text with every <time datetime> replaced by its machine-readable date, which is exact where the visible text is "3 days ago". */
+function cardText(card: Element): string {
+  let text = clean(card.textContent);
+  for (const t of card.querySelectorAll('time[datetime]')) {
+    const visible = clean(t.textContent);
+    const iso = t.getAttribute('datetime')?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+    if (visible && iso) text = text.replace(visible, iso);
+  }
+  return text;
+}
 
 /** Nearest ancestor that holds exactly one vacancy link — i.e. the card of one application. */
 function cardOf(link: Element, adapter: Adapter): Element {
@@ -38,8 +50,12 @@ export function parseList(doc: Document, adapter: Adapter): Omit<Observed, 'orig
 
     // Prefer an explicit status element; otherwise read the card text without title and company
     const statusEl = card.querySelector('[data-qa*="state"], [data-qa*="status"], [class*="status"], [class*="state"]');
+    const text = cardText(card);
     const rest = clean(card.textContent).replace(position, ' ').replace(company, ' ');
     const status = statusFromText(clean(statusEl?.textContent)) ?? statusFromText(rest);
+
+    // Without it a first sync would stamp every old application with today's date and skew the statistics
+    const appliedAt = appliedDateFromText(text);
 
     seen.set(id, {
       platform: adapter.platform,
@@ -48,6 +64,7 @@ export function parseList(doc: Document, adapter: Adapter): Omit<Observed, 'orig
       positionName: position,
       vacancyUrl: adapter.vacancyUrl(id),
       status,
+      ...(appliedAt ? { appliedAt } : {}),
     });
   }
   return [...seen.values()];

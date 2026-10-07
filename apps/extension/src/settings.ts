@@ -22,10 +22,14 @@ export interface State {
   lastSyncAt: number | null;
   lastError: string | null;
   totals: { created: number; updated: number };
+  /** Failed deliveries per queued item (server refused it or failed on it); an item is given up on after MAX_ATTEMPTS */
+  attempts: Record<string, number>;
+  /** Consecutive sends that failed as a whole (offline, 5xx, rate limit): drives the retry back-off */
+  failures: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = { serverUrl: 'http://localhost:3000', token: '', disabled: [] };
-export const DEFAULT_STATE: State = { queue: [], recent: [], lastSyncAt: null, lastError: null, totals: { created: 0, updated: 0 } };
+export const DEFAULT_STATE: State = { queue: [], recent: [], lastSyncAt: null, lastError: null, totals: { created: 0, updated: 0 }, attempts: {}, failures: 0 };
 
 export async function getSettings(): Promise<Settings> {
   const { settings } = await chrome.storage.local.get('settings');

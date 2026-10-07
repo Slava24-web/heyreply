@@ -71,9 +71,8 @@ export class ImportService {
     let linked = false;
 
     if (!existing) {
-      // Same company + position seen recently: an application added by hand, or one the e-mail import
-      // recorded under a derived "mail-…" id (ATS e-mails don't carry the job id)
-      const synthetic = item.externalId.startsWith('mail-');
+      // Same company + position seen recently: an application added by hand, or a legacy one recorded by the
+      // removed e-mail import under a derived "mail-…" id
       existing = await tx.application.findFirst({
         where: {
           userId,
@@ -84,15 +83,14 @@ export class ImportService {
           OR: [
             { externalId: null },
             { externalSource: item.platform, externalId: { startsWith: 'mail-' } },
-            ...(synthetic ? [{ externalSource: item.platform }] : []),
           ],
         },
         orderBy: { appliedAt: 'desc' },
       });
       if (existing) {
         linked = true;
-        // Keep a real job id over a derived one
-        const upgradeId = !existing.externalId || (existing.externalId.startsWith('mail-') && !synthetic);
+        // Replace a missing or legacy derived id with the real one
+        const upgradeId = !existing.externalId || existing.externalId.startsWith('mail-');
         await tx.application.update({
           where: { id: existing.id },
           data: {
@@ -127,7 +125,8 @@ export class ImportService {
 
     // New application
     await assertApplicationQuota(tx, userId);
-    const appliedAt = item.appliedAt ?? now;
+    // The date comes from a parsed page: never let it land in the future
+    const appliedAt = item.appliedAt && item.appliedAt < now ? item.appliedAt : now;
     const status: AppStatus = item.status && item.status !== 'APPLIED' ? item.status : 'APPLIED';
     const hasSalary = item.salaryFrom != null || item.salaryTo != null;
     const history: Prisma.StatusHistoryCreateWithoutApplicationInput[] = [{ fromStatus: null, toStatus: 'APPLIED', changedAt: appliedAt, comment: note }];

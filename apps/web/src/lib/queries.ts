@@ -46,11 +46,12 @@ export function useUpdateMe() {
   });
 }
 
-export function useApplications(params: ListParams) {
+export function useApplications(params: ListParams, { enabled = true }: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: [...qk.apps, params],
     queryFn: () => api<Paginated<ApplicationDto>>('/applications', { query: params }),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
@@ -155,8 +156,9 @@ export const useSalary = (p: Period & { currency?: string }) => useQuery(an<Sala
 export const useAttention = () =>
   useQuery(an<{ upcoming: ApplicationDto[]; waiting: ApplicationDto[]; ghostingDays: number }>('attention', {}));
 
-export function useInfiniteApplications(params: ListParams, pageSize = 50) {
+export function useInfiniteApplications(params: ListParams, pageSize = 50, { enabled = true }: { enabled?: boolean } = {}) {
   return useInfiniteQuery({
+    enabled,
     queryKey: [...qk.apps, 'infinite', params, pageSize],
     queryFn: ({ pageParam }) => api<Paginated<ApplicationDto>>('/applications', { query: { ...params, cursor: pageParam, limit: pageSize } }),
     initialPageParam: 0,

@@ -21,7 +21,8 @@ export function CommandPalette() {
   const { setTheme, resolvedTheme } = useTheme();
   const [q, setQ] = useState('');
   const dq = useDeferredValue(q);
-  const { data } = useApplications({ q: dq || undefined, limit: 6 });
+  // The palette is always mounted: search only while it is open, otherwise every page would fetch (and refetch) these rows for nothing
+  const { data } = useApplications({ q: dq || undefined, limit: 6 }, { enabled: paletteOpen });
 
   const navItems = [...NAV, ...ANALYTICS_NAV, ...BOTTOM_NAV].filter((n) => !q || t(n.key).toLowerCase().includes(q.toLowerCase()));
 
