@@ -320,7 +320,6 @@
     "heroCaption": "of {total} applications reached an interview",
     "funnel": "Funnel",
     "funnelSubtitle": "How many applications reached each stage",
-    "fromPrev": "from previous",
     "dynamics": "Trend",
     "dynamicsSubtitle": "Applications and replies per week",
     "applicationsSeries": "Applications",
@@ -550,6 +549,103 @@
       ]
     }
   },
+  "guideConversion": {
+    "navLabel": "Guides",
+    "home": "Home",
+    "crumbLabel": "Breadcrumb",
+    "toc": "Contents",
+    "metaTitle": "Job application conversion rate: how to calculate and improve it",
+    "metaDescription": "What the conversion of an application into an interview and an offer means, how to calculate it, why the average number tells you little, and what you can learn by comparing job boards and resumes.",
+    "kicker": "Guide",
+    "h1": "Job application conversion: how to calculate it and what to do with it",
+    "lead": "Once you have dozens of applications, \"why aren't they calling?\" turns into guesswork. Conversion answers it with numbers: what share of applications reaches a reply, an interview and an offer, and where the funnel narrows the most. Below: how to calculate it, how to read the result, and the mistakes that make it useless.",
+    "sections": [
+      {
+        "id": "what",
+        "h": "What application conversion is",
+        "p": [
+          "Conversion is the share of applications that reach the next stage. A job search is easy to picture as a funnel: application, employer's reply, recruiter call, test task, interview, offer. At every stage some candidates drop out, and each transition has its own cause.",
+          "That is why a single number, \"how many applications led to an offer\", explains little. It is more useful to look at several transitions separately: then you see what exactly is not working instead of just feeling unlucky."
+        ]
+      },
+      {
+        "id": "formulas",
+        "h": "The main metrics and formulas",
+        "p": [
+          "On the overview page heyreply calculates these figures, each as a share of all applications in the selected period:"
+        ],
+        "list": [
+          "Reply rate: applications that got any reply (a view is not a reply; an invitation or a rejection is) divided by all applications.",
+          "Interview conversion: applications that reached an interview divided by all applications.",
+          "Offer conversion: applications that ended in an offer divided by all applications.",
+          "Ghosting: applications that never got a reply within a set time (two weeks by default, adjustable) divided by all applications.",
+          "Median time to reply: the typical number of days between applying and the first reply. The median beats the average because one reply after two months does not distort it."
+        ],
+        "p2": [
+          "The funnel also shows the step between neighbouring stages, for example what share of those who passed screening got a test task. It helps you find the narrowest point."
+        ]
+      },
+      {
+        "id": "example",
+        "h": "A worked example",
+        "p": [
+          "Suppose over 90 days you sent 100 applications (the numbers are illustrative). 40 got a reply: the reply rate is 40%. 12 reached an interview: interview conversion is 12%. 3 turned into offers: offer conversion is 3%. 45 got no reply: ghosting is 45%.",
+          "These numbers show that your resume and applications do not work so badly (40% reply), and the main loss happens between a reply and an interview: only 12 of 40 replies became invitations. So look at how you handle screening and whether the jobs fit your experience, instead of sending another hundred applications."
+        ]
+      },
+      {
+        "id": "segments",
+        "h": "Compare segments, not averages",
+        "p": [
+          "The overall conversion mixes everything: top jobs and random ones, cold applications and referrals, different resumes. Comparisons inside one search are what inform:"
+        ],
+        "list": [
+          "By job board: on LinkedIn, Indeed and Habr Career reply rates usually differ noticeably, and you need your own values, not someone else's.",
+          "By position and level: applications for a role above your level convert differently from those for a familiar one.",
+          "By resume version and cover letter: tag which resume you sent and compare after a couple of weeks.",
+          "By how you applied: directly, through a recruiter or by referral. A referral almost always converts better, which is a good reason to spend time on networking."
+        ],
+        "p2": [
+          "For this heyreply stores a source, position, work format and tags on every application, and the analytics pages calculate the same metrics separately for each source, position and location."
+        ]
+      },
+      {
+        "id": "pitfalls",
+        "h": "Common mistakes when reading the numbers",
+        "list": [
+          "A small sample. If a board has only 8 applications, one offer gives \"12%\", which proves nothing. Compare segments once each has at least a few dozen applications, and treat a difference of a couple of percent as noise.",
+          "Immature applications. Applications from the last few days are still waiting for a reply, so their conversion is understated. Use a period that ended at least two or three weeks ago, or look at the median time to reply.",
+          "Mixing different goals. If you apply to different roles at once, the overall figure describes your mix, not you. Split segments by position.",
+          "Auto-replies. A template rejection an hour after you applied is a reply too, but not an assessment of you as a candidate. It usually points to a filter on formal criteria (experience, salary, city) rather than the quality of your resume.",
+          "Counting from memory. Forgotten and unrecorded applications make the picture look better than it is: you remember the successful ones. Record applications at the moment you send them, preferably automatically."
+        ]
+      },
+      {
+        "id": "improve",
+        "h": "How to use the result",
+        "p": [
+          "Move through the funnel from left to right and fix the narrowest transition:"
+        ],
+        "list": [
+          "Few replies: check your resume and headline, the list of jobs (do the requirements fit), and when you apply. Applying within the first day of a posting often helps.",
+          "Replies but no invitations: clarify salary and format expectations, and reread the posting before the screening call.",
+          "Invitations but no offers: practise interviews and collect feedback after rejections. In heyreply you can record the reason for a rejection, and over time you see whether it repeats.",
+          "A lot of ghosting: shorten your waiting time and move to channels that reply more often, such as referrals and direct contacts."
+        ]
+      },
+      {
+        "id": "tool",
+        "h": "How to avoid counting by hand",
+        "p": [
+          "A manual spreadsheet works while there are few applications. Later it gets hard to keep updated, and the data goes stale. heyreply adds applications automatically through a browser extension (hh.ru, LinkedIn, Habr Career, Indeed and 22 more boards), pulls statuses from the My applications pages and calculates the figures above itself, with filters by period, source and position. It is free and needs no job board passwords."
+        ]
+      }
+    ],
+    "ctaTitle": "See your own funnel",
+    "ctaText": "Create a free account, connect the extension and in a couple of weeks you will see the first numbers for your applications.",
+    "cta": "Create an account",
+    "relatedTitle": "Related"
+  },
   "extensionInstall": {
     "chrome": "Add to Chrome",
     "firefox": "Add to Firefox"
@@ -663,6 +759,8 @@
     ],
     "boardsTitle": "26 job boards the extension understands",
     "boardsText": "The extension notices new applications on every board listed. Statuses from the “My applications” page are pulled from hh.ru, Habr Career, LinkedIn and Indeed.",
+    "boardLink": "Tracking {name} applications",
+    "guideLink": "Guide: application conversion",
     "screensTitle": "All applications in one table",
     "screensText": "A table, a board and a feed: filter by status, job board, work format and salary, search by company and notes, export to CSV and JSON. The screenshot shows demo data.",
     "screenDashboardAlt": "The heyreply overview: interview conversion, number of applications, median time to a reply and the funnel by stage",

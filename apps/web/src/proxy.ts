@@ -68,7 +68,7 @@ export default function proxy(request: NextRequest) {
   // The start page is the public landing for visitors; people who are signed in go straight to the app
   const isHome = path === '/' || path === '';
   // Public guides to the job boards the extension supports: for search visitors, signed in or not
-  const isBoard = /^\/boards\/[a-z]+$/.test(path);
+  const isBoard = /^\/boards\/[a-z]+$/.test(path) || path === '/guides/application-conversion';
   if (isHome && signedIn) return withCsp(NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url)), csp);
 
   if (!signedIn && !isPublic && !isLegal && !isHome && !isBoard) {

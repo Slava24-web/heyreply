@@ -2,13 +2,10 @@ import { ArrowRight, Check } from 'lucide-react';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Suspense } from 'react';
 import { platformSourceName } from '@heyreply/shared';
 import { ExtensionInstall } from '@/components/extension-install';
-import { LegalLinks } from '@/components/legal/legal-links';
-import { Logo } from '@/components/logo';
+import { PublicShell, publicSection } from '@/components/landing/public-shell';
 import { Screenshot } from '@/components/screenshot';
-import { LocaleSwitch, ThemeToggle } from '@/components/shell/prefs';
 import { buttonVariants } from '@/components/ui/button';
 import { Link } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
@@ -19,7 +16,7 @@ import { cn } from '@/lib/utils';
 
 type Params = Promise<{ locale: string; slug: string }>;
 
-const section = 'mx-auto w-full max-w-[820px] px-4 sm:px-8';
+const section = publicSection;
 const h2 = 'font-display text-[clamp(22px,2.6vw,30px)] leading-[1.15] font-medium tracking-[-0.02em]';
 
 export function generateStaticParams() {
@@ -55,25 +52,8 @@ export default async function BoardPage({ params }: { params: Params }) {
   }).replace(/</g, '\\u003c');
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <PublicShell locale={locale}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd }} />
-      <header className={cn(section, 'flex items-center justify-between gap-4 py-5')}>
-        <Link href="/" aria-label="heyreply">
-          <Logo />
-        </Link>
-        <div className="flex items-center gap-1">
-          <Suspense>
-            <LocaleSwitch />
-          </Suspense>
-          <ThemeToggle />
-          <Link href="/register" className={cn(buttonVariants({ size: 'sm' }), 'ml-1')}>
-            <span className="sm:hidden">{tl('ctaShort')}</span>
-            <span className="hidden sm:inline">{tl('cta')}</span>
-          </Link>
-        </div>
-      </header>
-
-      <main className="flex-1">
         <article className={cn(section, 'flex flex-col gap-10 py-8 lg:py-14')}>
           <header>
             <nav aria-label={t('crumbLabel')} className="mb-4 text-sm text-muted">
@@ -150,11 +130,6 @@ export default async function BoardPage({ params }: { params: Params }) {
             <p className="mt-4 text-sm text-subtle">{t('supported')}</p>
           </section>
         </article>
-      </main>
-
-      <footer className={cn(section, 'flex flex-col gap-3 border-t border-border py-6')}>
-        <LegalLinks sameTab />
-      </footer>
-    </div>
+    </PublicShell>
   );
 }

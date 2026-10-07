@@ -168,6 +168,11 @@ export async function Landing({ locale }: { locale: string }) {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link href="/guides/application-conversion" className="text-primary hover:underline">
+                {t('guideLink')}
+              </Link>
+            </li>
           </ul>
         </section>
 

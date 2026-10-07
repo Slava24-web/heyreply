@@ -42,7 +42,6 @@ export function Legend({ items }: { items: { color: string; label: string; line?
 /** Funnel as labeled horizontal bars: every value is printed, so no hover is needed to read it. */
 export function FunnelBars({ stages }: { stages: FunnelStageDto[] }) {
   const t = useTranslations('stage');
-  const td = useTranslations('dashboard');
   const f = useFormat();
   const max = Math.max(1, stages[0]?.count ?? 1);
   return (
@@ -65,7 +64,7 @@ export function FunnelBars({ stages }: { stages: FunnelStageDto[] }) {
           </div>
           <span className="text-right">
             <span className="font-display text-[15px] tabular">{f.pct(s.fromFirst)}</span>
-            {i > 0 ? <span className="hidden text-[11px] text-subtle sm:block">{f.pct(s.fromPrev)} {td('fromPrev')}</span> : null}
+            {i > 0 ? <span className="hidden text-[11px] text-subtle sm:block">{f.pct(s.fromPrev)}</span> : null}
           </span>
         </div>
       ))}

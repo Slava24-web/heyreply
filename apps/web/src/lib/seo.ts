@@ -36,7 +36,7 @@ export function alternatesFor(locale: string, path: string): NonNullable<Metadat
 const OG_LOCALE: Record<string, string> = { ru: 'ru_RU', en: 'en_US' };
 
 /** Public pages that should be found by search (and listed in the sitemap), as locale-less paths. */
-export const INDEXABLE_PATHS = ['/', '/boards/hh', '/boards/linkedin', '/boards/habr', '/boards/indeed', '/register', '/privacy', '/terms', '/consent'] as const;
+export const INDEXABLE_PATHS = ['/', '/boards/hh', '/boards/linkedin', '/boards/habr', '/boards/indeed', '/guides/application-conversion', '/register', '/privacy', '/terms', '/consent'] as const;
 
 interface PageSeo {
   locale: string;
