@@ -67,7 +67,6 @@ services:
     environment:
       # Operator details printed in the privacy policy, terms and consent (apps/web/src/lib/legal.ts); required so the site never ships with placeholders
       LEGAL_OPERATOR_NAME: ${LEGAL_OPERATOR_NAME:?set LEGAL_OPERATOR_NAME in .env (full name or company that operates the service)}
-      LEGAL_OPERATOR_ADDRESS: ${LEGAL_OPERATOR_ADDRESS:?set LEGAL_OPERATOR_ADDRESS in .env}
       LEGAL_CONTACT_EMAIL: ${LEGAL_CONTACT_EMAIL:?set LEGAL_CONTACT_EMAIL in .env (where users send data requests)}
       LEGAL_HOSTING: ${LEGAL_HOSTING:?set LEGAL_HOSTING in .env (hosting provider and country)}
       # Public address of the site: canonical links, hreflang, the sitemap and social previews are built from it
