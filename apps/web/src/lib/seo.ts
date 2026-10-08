@@ -3,7 +3,7 @@ import { getTranslations } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 
 /**
- * Public origin of the site, e.g. https://heyreply.example.com (WEB_ORIGIN, the same variable the API uses).
+ * Public origin of the site, e.g. https://heyreply.site (WEB_ORIGIN, the same variable the API uses).
  * Canonical links, hreflang, the sitemap and social previews need absolute URLs.
  */
 export function siteOrigin(): URL {

@@ -47,6 +47,12 @@ li:last-child { border-bottom: 0; }
 li .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 li .r { font-size: 11px; color: var(--primary); white-space: nowrap; }
 li .r.error { color: var(--danger); }
+.collapsible { margin: 12px 0 6px; }
+.collapsible summary { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); cursor: pointer; user-select: none; list-style: none; }
+.collapsible summary::-webkit-details-marker { display: none; }
+.collapsible summary::before { content: '▸'; display: inline-block; width: 12px; }
+.collapsible[open] summary::before { content: '▾'; }
+.collapsible .platforms { margin-top: 6px; }
 .platforms { display: flex; flex-wrap: wrap; gap: 6px; }
 .platforms label { flex-direction: row; align-items: center; gap: 6px; margin: 0; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; color: var(--text); cursor: pointer; }
 .platforms input { height: auto; accent-color: var(--primary); }

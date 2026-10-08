@@ -5,7 +5,7 @@
 ## Что указать
 
 - **Политика конфиденциальности (URL):** `https://<ваш домен>/ru/privacy` (для международного листинга `/en/privacy`). Страница открывается без входа.
-- **Сайт (homepage):** собирается из `HEYREPLY_SITE_URL`: `HEYREPLY_SITE_URL=https://<домен> pnpm ext:zip`.
+- **Сайт (homepage):** собирается из `HEYREPLY_SITE_URL`: `HEYREPLY_SITE_URL=https://heyreply.site pnpm ext:zip`.
 - **Единственное назначение:** «Автоматически добавляет отклики пользователя на вакансии с сайтов поиска работы в его личный кабинет heyreply».
 
 ## Ответы на вопросы о данных (Chrome Web Store → Privacy practices)
